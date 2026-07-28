@@ -64,12 +64,12 @@ export function AppLayout() {
                     end={item.end}
                     className={({ isActive }) =>
                       cn(
-                        "flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-950",
+                        "group flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-950",
                         isActive && "bg-neutral-950 text-white hover:bg-neutral-950 hover:text-white"
                       )
                     }
                   >
-                    <item.icon className="size-4" />
+                    <item.icon className="size-4 transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-110 group-active:scale-95" />
                     {item.label}
                   </NavLink>
                 ))}
@@ -78,17 +78,17 @@ export function AppLayout() {
               <div className="flex items-center gap-1">
                 <Link
                   to="/search"
-                  className="flex size-10 items-center justify-center rounded-full transition-colors hover:bg-neutral-100"
+                  className="group flex size-10 items-center justify-center rounded-full transition-colors hover:bg-neutral-100"
                   aria-label="상품 검색"
                 >
-                  <Search className="size-6 stroke-[1.8]" />
+                  <Search className="size-6 stroke-[1.8] transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-105" />
                 </Link>
                 <button
                   type="button"
-                  className="flex size-10 items-center justify-center rounded-full transition-colors hover:bg-neutral-100"
+                  className="group flex size-10 items-center justify-center rounded-full transition-colors hover:bg-neutral-100"
                   aria-label="알림"
                 >
-                  <Bell className="size-6 stroke-[1.8]" />
+                  <Bell className="size-6 stroke-[1.8] transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:rotate-6" />
                 </button>
               </div>
             </div>
@@ -109,7 +109,7 @@ export function AppLayout() {
               end={item.end}
               className={({ isActive }) =>
                 cn(
-                  "relative flex min-w-0 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-neutral-400",
+                  "group relative flex min-w-0 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-neutral-400",
                   isActive && "text-neutral-950"
                 )
               }
@@ -118,7 +118,7 @@ export function AppLayout() {
                 <>
                   <span
                     className={cn(
-                      "flex size-8 items-center justify-center rounded-md",
+                      "flex size-8 items-center justify-center rounded-md transition-transform duration-200 ease-out group-hover:-translate-y-1 group-active:scale-95",
                       isActive && "bg-[#58c8bd]/20"
                     )}
                   >

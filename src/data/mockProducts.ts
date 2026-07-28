@@ -113,7 +113,7 @@ const stories: Record<number, string[]> = {
 
 export function createMockProductDetail(productId: number): ProductDetail | undefined {
   const product = mockProducts.find((item) => item.id === productId)
-  if (!product) {
+  if (!product || product.status !== "ON_SALE") {
     return undefined
   }
 

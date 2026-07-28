@@ -9,6 +9,10 @@ export async function searchProducts(params: SearchProductsParams) {
   if (useMocks) {
     const normalizedKeyword = params.keyword.trim().toLowerCase()
     const filteredProducts = mockProducts.filter((product) => {
+      if (product.status !== "ON_SALE") {
+        return false
+      }
+
       if (params.type === "CATEGORY") {
         return (
           product.name.toLowerCase().includes(normalizedKeyword) ||

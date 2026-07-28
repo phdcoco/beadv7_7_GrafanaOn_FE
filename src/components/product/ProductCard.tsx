@@ -32,10 +32,10 @@ export function ProductCard({ product, compact = false }: ProductCardProps) {
       </div>
       <div className="pt-2">
         <p className="text-[11px] text-neutral-500">{product.brand}</p>
-        <p className="mt-0.5 line-clamp-2 min-h-9 text-[13px] font-medium leading-[18px] text-neutral-900">
+        <p className="mt-0.5 line-clamp-2 text-[13px] font-medium leading-[17px] text-neutral-900">
           {product.name}
         </p>
-        <p className="mt-1 text-sm font-bold">{formatPrice(product.price)}원</p>
+        <p className="mt-0.5 text-sm font-bold">{formatPrice(product.price)}원</p>
         <p className="mt-1 flex items-center gap-1 text-[11px] text-neutral-400">
           <Eye className="size-3" />
           {product.viewCount.toLocaleString()}명이 보는 중

@@ -5,14 +5,16 @@ import { ArrowRight } from "lucide-react"
 import { getProducts } from "@/api/productApi"
 import { ProductCard } from "@/components/product/ProductCard"
 import { StoryCard } from "@/components/product/StoryCard"
+import { UpcomingRelease } from "@/components/product/UpcomingRelease"
 import { offerStories } from "@/data/mockProducts"
 
-type HomeTab = "ALL" | "IMMEDIATE" | "OFFER"
+type HomeTab = "ALL" | "IMMEDIATE" | "OFFER" | "UPCOMING"
 
 const tabs: { value: HomeTab; label: string }[] = [
   { value: "ALL", label: "전체" },
   { value: "IMMEDIATE", label: "즉시구매" },
   { value: "OFFER", label: "오퍼구매" },
+  { value: "UPCOMING", label: "공개 예정" },
 ]
 
 export function ProductListPage() {
@@ -20,26 +22,28 @@ export function ProductListPage() {
 
   const immediateProducts = useQuery({
     queryKey: ["products", "IMMEDIATE", "home"],
-    queryFn: () => getProducts({ saleType: "IMMEDIATE" }),
+    queryFn: () =>
+      getProducts({ saleType: "IMMEDIATE", status: "ON_SALE" }),
   })
 
   const offerProducts = useQuery({
     queryKey: ["products", "OFFER", "home"],
-    queryFn: () => getProducts({ saleType: "OFFER" }),
+    queryFn: () => getProducts({ saleType: "OFFER", status: "ON_SALE" }),
   })
 
   const showImmediate = tab === "ALL" || tab === "IMMEDIATE"
   const showOffers = tab === "ALL" || tab === "OFFER"
+  const showUpcoming = tab === "UPCOMING"
 
   return (
     <div className="pb-8">
       <div className="sticky top-16 z-20 border-b border-neutral-100 bg-white px-5 py-3 md:top-[72px] md:px-8">
-        <div className="grid grid-cols-3 gap-3 md:max-w-md">
+        <div className="grid grid-cols-4 gap-2 md:max-w-xl md:gap-3">
           {tabs.map((item) => (
             <button
               key={item.value}
               type="button"
-              className={`h-12 rounded-lg border text-sm font-bold transition-colors ${
+              className={`h-11 rounded-lg border text-[13px] font-bold transition-colors md:h-12 md:text-sm ${
                 tab === item.value
                   ? "border-neutral-950 bg-neutral-950 text-white"
                   : "border-neutral-200 bg-white text-neutral-500"
@@ -51,6 +55,8 @@ export function ProductListPage() {
           ))}
         </div>
       </div>
+
+      {showUpcoming && <UpcomingRelease />}
 
       {showImmediate && (
         <section className="pt-7">
@@ -98,28 +104,38 @@ export function ProductListPage() {
         </section>
       )}
 
-      <section className="mx-5 mt-6 grid gap-3 border-y border-neutral-200 py-5 md:mx-8 md:grid-cols-2">
-        <Link
-          to="/search"
-          className="flex items-center justify-between bg-[#f5f7ff] p-4"
-        >
-          <div>
-            <p className="text-xs font-semibold text-[#5b72f2]">무엇을 찾고 있나요?</p>
-            <p className="mt-1 text-sm font-bold">상품명과 이야기로 검색하기</p>
-          </div>
-          <ArrowRight className="size-5" />
-        </Link>
-        <Link
-          to="/login"
-          className="flex items-center justify-between bg-[#fff5f3] p-4"
-        >
-          <div>
-            <p className="text-xs font-semibold text-[#e65f53]">나의 D:EAR</p>
-            <p className="mt-1 text-sm font-bold">로그인하고 오퍼 관리하기</p>
-          </div>
-          <ArrowRight className="size-5" />
-        </Link>
-      </section>
+      {!showUpcoming && (
+        <section className="mx-5 mt-6 grid gap-3 border-y border-neutral-200 py-5 md:mx-8 md:grid-cols-2">
+          <Link
+            to="/search"
+            className="flex items-center justify-between bg-[#f5f7ff] p-4"
+          >
+            <div>
+              <p className="text-xs font-semibold text-[#5b72f2]">
+                무엇을 찾고 있나요?
+              </p>
+              <p className="mt-1 text-sm font-bold">
+                상품명과 이야기로 검색하기
+              </p>
+            </div>
+            <ArrowRight className="size-5" />
+          </Link>
+          <Link
+            to="/login"
+            className="flex items-center justify-between bg-[#fff5f3] p-4"
+          >
+            <div>
+              <p className="text-xs font-semibold text-[#e65f53]">
+                나의 D:EAR
+              </p>
+              <p className="mt-1 text-sm font-bold">
+                로그인하고 오퍼 관리하기
+              </p>
+            </div>
+            <ArrowRight className="size-5" />
+          </Link>
+        </section>
+      )}
     </div>
   )
 }

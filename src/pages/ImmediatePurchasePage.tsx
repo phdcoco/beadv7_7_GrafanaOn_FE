@@ -21,7 +21,8 @@ export function ImmediatePurchasePage() {
 
   const productsQuery = useQuery({
     queryKey: ["products", "IMMEDIATE", "grid"],
-    queryFn: () => getProducts({ saleType: "IMMEDIATE" }),
+    queryFn: () =>
+      getProducts({ saleType: "IMMEDIATE", status: "ON_SALE" }),
   })
 
   const products = useMemo(() => productsQuery.data ?? [], [productsQuery.data])
