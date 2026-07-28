@@ -1,0 +1,17 @@
+{
+  "name": "D:EAR",
+  "short_name": "D:EAR",
+  "description": "상품이 가진 이야기를 만나는 거래 앱",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/dear.png",
+      "sizes": "952x952",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

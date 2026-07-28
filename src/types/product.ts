@@ -24,6 +24,8 @@ export type ProductImage = {
 }
 
 export type ProductDetail = {
+  productId?: number
+  saleType?: ProductSaleType
   sellerId: number
   images: ProductImage[]
   name: string

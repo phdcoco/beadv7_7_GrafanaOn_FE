@@ -1,141 +1,162 @@
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router-dom"
-import { RefreshCw } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { getProducts } from "@/api/productApi"
-import { Button } from "@/components/ui/button"
-import { Select } from "@/components/ui/select"
-import { formatPrice } from "@/lib/format"
-import type { ProductSaleType, ProductStatus } from "@/types/product"
+import { ProductCard } from "@/components/product/ProductCard"
+import { StoryCard } from "@/components/product/StoryCard"
+import { offerStories } from "@/data/mockProducts"
+
+type HomeTab = "ALL" | "IMMEDIATE" | "OFFER"
+
+const tabs: { value: HomeTab; label: string }[] = [
+  { value: "ALL", label: "전체" },
+  { value: "IMMEDIATE", label: "즉시구매" },
+  { value: "OFFER", label: "오퍼구매" },
+]
 
 export function ProductListPage() {
-  const [saleType, setSaleType] = useState<ProductSaleType | "">("")
-  const [status, setStatus] = useState<ProductStatus | "">("")
+  const [tab, setTab] = useState<HomeTab>("ALL")
 
-  const productsQuery = useQuery({
-    queryKey: ["products", saleType, status],
-    queryFn: () =>
-      getProducts({
-        saleType: saleType || undefined,
-        status: status || undefined,
-      }),
+  const immediateProducts = useQuery({
+    queryKey: ["products", "IMMEDIATE", "home"],
+    queryFn: () => getProducts({ saleType: "IMMEDIATE" }),
   })
 
-  const totalCount = productsQuery.data?.length ?? 0
+  const offerProducts = useQuery({
+    queryKey: ["products", "OFFER", "home"],
+    queryFn: () => getProducts({ saleType: "OFFER" }),
+  })
+
+  const showImmediate = tab === "ALL" || tab === "IMMEDIATE"
+  const showOffers = tab === "ALL" || tab === "OFFER"
 
   return (
-    <div className="grid min-h-[calc(100vh-104px)] grid-rows-[auto_1fr] overflow-hidden rounded-lg border border-neutral-200 bg-white">
-      <div className="flex flex-col gap-3 border-b border-neutral-200 p-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-3">
-          <div>
-            <h1 className="text-base font-semibold">상품 관리</h1>
-            <p className="text-xs text-neutral-500">총 {totalCount}개</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Select
-            value={saleType}
-            onChange={(event) => setSaleType(event.target.value as ProductSaleType | "")}
-            aria-label="판매 방식"
-          >
-            <option value="">판매방식 전체</option>
-            <option value="IMMEDIATE">즉시구매</option>
-            <option value="OFFER">오퍼</option>
-          </Select>
-          <Select
-            value={status}
-            onChange={(event) => setStatus(event.target.value as ProductStatus | "")}
-            aria-label="상품 상태"
-          >
-            <option value="">상태 전체</option>
-            <option value="PREPARING">공개 예정</option>
-            <option value="ON_SALE">판매 중</option>
-            <option value="SOLD_OUT">판매 완료</option>
-          </Select>
-          <Button
-            variant="secondary"
-            size="icon"
-            aria-label="새로고침"
-            onClick={() => productsQuery.refetch()}
-          >
-            <RefreshCw className="size-4" />
-          </Button>
+    <div className="pb-8">
+      <div className="sticky top-16 z-20 border-b border-neutral-100 bg-white px-5 py-3 md:top-[72px] md:px-8">
+        <div className="grid grid-cols-3 gap-3 md:max-w-md">
+          {tabs.map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              className={`h-12 rounded-lg border text-sm font-bold transition-colors ${
+                tab === item.value
+                  ? "border-neutral-950 bg-neutral-950 text-white"
+                  : "border-neutral-200 bg-white text-neutral-500"
+              }`}
+              onClick={() => setTab(item.value)}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="overflow-auto">
-        <table className="w-full min-w-[860px] border-collapse text-left text-sm">
-          <thead className="sticky top-0 bg-neutral-50 text-xs text-neutral-500">
-            <tr>
-              <th className="w-[88px] px-4 py-3 font-medium">이미지</th>
-              <th className="px-4 py-3 font-medium">상품</th>
-              <th className="px-4 py-3 font-medium">판매방식</th>
-              <th className="px-4 py-3 font-medium">상태</th>
-              <th className="px-4 py-3 font-medium">가격</th>
-              <th className="px-4 py-3 font-medium">조회수</th>
-            </tr>
-          </thead>
-          <tbody>
-            {productsQuery.isLoading && (
-              <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-neutral-500">
-                  상품을 불러오는 중입니다.
-                </td>
-              </tr>
-            )}
-
-            {productsQuery.isError && (
-              <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-red-600">
-                  상품 목록을 불러오지 못했습니다.
-                </td>
-              </tr>
-            )}
-
-            {productsQuery.data?.map((product) => (
-              <tr key={product.id} className="border-t border-neutral-100">
-                <td className="px-4 py-3">
-                  <img
-                    src={product.url}
-                    alt={product.name}
-                    className="size-14 rounded-md object-cover"
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <Link
-                    to={`/products/${product.id}`}
-                    className="font-medium hover:underline"
-                  >
-                    {product.name}
-                  </Link>
-                  <p className="mt-1 text-xs text-neutral-500">{product.brand}</p>
-                </td>
-                <td className="px-4 py-3 text-neutral-700">{product.saleType}</td>
-                <td className="px-4 py-3">
-                  <span className="rounded-md bg-neutral-100 px-2 py-1 text-xs font-medium">
-                    {product.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 font-medium">
-                  {formatPrice(product.price)}원
-                </td>
-                <td className="px-4 py-3 text-neutral-600">
-                  {product.viewCount.toLocaleString()}
-                </td>
-              </tr>
+      {showImmediate && (
+        <section className="pt-7">
+          <SectionHeader
+            title="즉시구매 상품"
+            description="기다림 없이 바로 만날 수 있어요"
+            to="/immediate"
+          />
+          <div className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-3 md:px-8">
+            {immediateProducts.isLoading &&
+              Array.from({ length: 4 }).map((_, index) => (
+                <ProductSkeleton key={index} />
+              ))}
+            {immediateProducts.data?.map((product) => (
+              <div key={product.id} className="snap-start">
+                <ProductCard product={product} />
+              </div>
             ))}
+          </div>
+        </section>
+      )}
 
-            {productsQuery.data?.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-neutral-500">
-                  조건에 맞는 상품이 없습니다.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {showOffers && (
+        <section className="pt-8">
+          <SectionHeader
+            title="오퍼구매 이야기"
+            description="신발에 담긴 이야기를 읽고 가격을 제안해 보세요"
+            to="/offers"
+          />
+          <div className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-4 md:px-8">
+            {offerStories
+              .filter((story) =>
+                offerProducts.data
+                  ? offerProducts.data.some(
+                      (product) => product.id === story.productId
+                    )
+                  : true
+              )
+              .map((story) => (
+                <div key={story.productId} className="snap-start">
+                  <StoryCard {...story} horizontal />
+                </div>
+              ))}
+          </div>
+        </section>
+      )}
+
+      <section className="mx-5 mt-6 grid gap-3 border-y border-neutral-200 py-5 md:mx-8 md:grid-cols-2">
+        <Link
+          to="/search"
+          className="flex items-center justify-between bg-[#f5f7ff] p-4"
+        >
+          <div>
+            <p className="text-xs font-semibold text-[#5b72f2]">무엇을 찾고 있나요?</p>
+            <p className="mt-1 text-sm font-bold">상품명과 이야기로 검색하기</p>
+          </div>
+          <ArrowRight className="size-5" />
+        </Link>
+        <Link
+          to="/login"
+          className="flex items-center justify-between bg-[#fff5f3] p-4"
+        >
+          <div>
+            <p className="text-xs font-semibold text-[#e65f53]">나의 D:EAR</p>
+            <p className="mt-1 text-sm font-bold">로그인하고 오퍼 관리하기</p>
+          </div>
+          <ArrowRight className="size-5" />
+        </Link>
+      </section>
+    </div>
+  )
+}
+
+function SectionHeader({
+  title,
+  description,
+  to,
+}: {
+  title: string
+  description: string
+  to: string
+}) {
+  return (
+    <div className="mb-4 flex items-end justify-between px-5 md:px-8">
+      <div>
+        <h2 className="text-xl font-extrabold">{title}</h2>
+        <p className="mt-1 text-xs text-neutral-500">{description}</p>
       </div>
+      <Link
+        to={to}
+        className="flex items-center gap-1 text-xs font-semibold text-neutral-500"
+      >
+        전체보기
+        <ArrowRight className="size-3.5" />
+      </Link>
+    </div>
+  )
+}
+
+function ProductSkeleton() {
+  return (
+    <div className="w-44 shrink-0 animate-pulse">
+      <div className="aspect-square rounded-lg bg-neutral-100" />
+      <div className="mt-3 h-3 w-16 bg-neutral-100" />
+      <div className="mt-2 h-4 w-full bg-neutral-100" />
+      <div className="mt-2 h-4 w-24 bg-neutral-100" />
     </div>
   )
 }

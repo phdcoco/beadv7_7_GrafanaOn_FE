@@ -1,16 +1,8 @@
-import { FormEvent, useState } from "react"
+import { type FormEvent, useState } from "react"
 import { useMutation } from "@tanstack/react-query"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { ArrowLeft } from "lucide-react"
 import { signUp } from "@/api/authApi"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 
 export function SignUpPage() {
   const navigate = useNavigate()
@@ -24,7 +16,7 @@ export function SignUpPage() {
 
   const signUpMutation = useMutation({
     mutationFn: signUp,
-    onSuccess: () => navigate("/"),
+    onSuccess: () => navigate("/login"),
   })
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -33,63 +25,105 @@ export function SignUpPage() {
   }
 
   function updateField(name: keyof typeof form, value: string) {
-    setForm((prev) => ({ ...prev, [name]: value }))
+    setForm((previous) => ({ ...previous, [name]: value }))
   }
 
   return (
-    <div className="mx-auto max-w-md">
-      <Card>
-        <CardHeader>
-          <CardTitle>Create account</CardTitle>
-          <CardDescription>Enter the profile information required by Auth.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <Input
-              value={form.email}
-              onChange={(event) => updateField("email", event.target.value)}
-              type="email"
-              placeholder="email@example.com"
-              required
-            />
-            <Input
-              value={form.password}
-              onChange={(event) => updateField("password", event.target.value)}
-              type="password"
-              placeholder="Password"
-              required
-            />
-            <Input
-              value={form.name}
-              onChange={(event) => updateField("name", event.target.value)}
-              placeholder="Name"
-              required
-            />
-            <Input
-              value={form.defaultShippingAddress}
-              onChange={(event) =>
-                updateField("defaultShippingAddress", event.target.value)
-              }
-              placeholder="Default shipping address"
-              required
-            />
-            <Input
-              value={form.phoneNumber}
-              onChange={(event) => updateField("phoneNumber", event.target.value)}
-              placeholder="Phone number"
-              required
-            />
-            {signUpMutation.isError && (
-              <p className="text-sm text-red-600">
-                Sign up failed. Please check the request values.
-              </p>
-            )}
-            <Button className="w-full" disabled={signUpMutation.isPending}>
-              {signUpMutation.isPending ? "Creating..." : "Create account"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="mx-auto max-w-xl px-5 py-7 md:px-8 md:py-10">
+      <Link
+        to="/login"
+        className="flex size-10 items-center justify-center rounded-full hover:bg-neutral-100"
+        aria-label="로그인으로 돌아가기"
+      >
+        <ArrowLeft className="size-5" />
+      </Link>
+
+      <div className="mt-5">
+        <p className="text-xs font-bold text-neutral-400">JOIN D:EAR</p>
+        <h1 className="mt-2 text-2xl font-black">회원가입</h1>
+        <p className="mt-2 text-sm text-neutral-500">
+          거래와 배송에 필요한 기본 정보를 입력해 주세요.
+        </p>
+      </div>
+
+      <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+        <FormField
+          label="이메일"
+          value={form.email}
+          type="email"
+          placeholder="email@example.com"
+          onChange={(value) => updateField("email", value)}
+        />
+        <FormField
+          label="비밀번호"
+          value={form.password}
+          type="password"
+          placeholder="8자 이상의 비밀번호"
+          onChange={(value) => updateField("password", value)}
+        />
+        <div className="grid gap-5 sm:grid-cols-2">
+          <FormField
+            label="이름"
+            value={form.name}
+            placeholder="실명"
+            onChange={(value) => updateField("name", value)}
+          />
+          <FormField
+            label="전화번호"
+            value={form.phoneNumber}
+            placeholder="010-0000-0000"
+            onChange={(value) => updateField("phoneNumber", value)}
+          />
+        </div>
+        <FormField
+          label="기본 배송지"
+          value={form.defaultShippingAddress}
+          placeholder="주소를 입력해 주세요"
+          onChange={(value) => updateField("defaultShippingAddress", value)}
+        />
+
+        {signUpMutation.isError && (
+          <p className="text-sm text-red-600">
+            입력값을 확인한 뒤 다시 시도해 주세요.
+          </p>
+        )}
+
+        <button
+          type="submit"
+          className="h-12 w-full rounded-md bg-neutral-950 text-sm font-bold text-white"
+          disabled={signUpMutation.isPending}
+        >
+          {signUpMutation.isPending ? "가입 중..." : "D:EAR 시작하기"}
+        </button>
+      </form>
     </div>
+  )
+}
+
+function FormField({
+  label,
+  value,
+  type = "text",
+  placeholder,
+  onChange,
+}: {
+  label: string
+  value: string
+  type?: string
+  placeholder: string
+  onChange: (value: string) => void
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-xs font-bold">{label}</span>
+      <input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        type={type}
+        className="h-12 w-full rounded-md border border-neutral-300 px-3 text-sm outline-none focus:border-neutral-950"
+        placeholder={placeholder}
+        required
+      />
+    </label>
   )
 }

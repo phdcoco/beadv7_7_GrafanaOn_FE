@@ -1,6 +1,8 @@
 import { createBrowserRouter } from "react-router-dom"
 import { AppLayout } from "@/components/layout/AppLayout"
 import { LoginPage } from "@/pages/LoginPage"
+import { ImmediatePurchasePage } from "@/pages/ImmediatePurchasePage"
+import { OfferPurchasePage } from "@/pages/OfferPurchasePage"
 import { ProductDetailPage } from "@/pages/ProductDetailPage"
 import { ProductListPage } from "@/pages/ProductListPage"
 import { ProductSearchPage } from "@/pages/ProductSearchPage"
@@ -18,6 +20,14 @@ export const router = createBrowserRouter([
       {
         path: "/search",
         element: <ProductSearchPage />,
+      },
+      {
+        path: "/immediate",
+        element: <ImmediatePurchasePage />,
+      },
+      {
+        path: "/offers",
+        element: <OfferPurchasePage />,
       },
       {
         path: "/products/:productId",

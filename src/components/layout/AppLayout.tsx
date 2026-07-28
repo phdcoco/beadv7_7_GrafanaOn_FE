@@ -1,100 +1,152 @@
-import { Link, NavLink, Outlet } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom"
 import {
   Bell,
-  PackageSearch,
+  HandCoins,
+  Home,
   Search,
   ShoppingBag,
   UserRound,
+  Zap,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { BrandWordmark, SplashLogo } from "@/components/brand/Brand"
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { to: "/", label: "상품", icon: ShoppingBag },
-  { to: "/search", label: "검색", icon: Search },
-  { to: "/profile", label: "프로필", icon: UserRound },
+  { to: "/", label: "홈", icon: Home, end: true },
+  { to: "/immediate", label: "즉시구매", icon: Zap },
+  { to: "/offers", label: "오퍼구매", icon: HandCoins },
+  { to: "/profile", label: "마이페이지", icon: UserRound },
 ]
 
 export function AppLayout() {
+  const { pathname } = useLocation()
+  const [showSplash, setShowSplash] = useState(
+    () => sessionStorage.getItem("dear-splash-seen") !== "true"
+  )
+  const isProductDetail = pathname.startsWith("/products/")
+
+  useEffect(() => {
+    if (!showSplash) {
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowSplash(false)
+      sessionStorage.setItem("dear-splash-seen", "true")
+    }, 1400)
+
+    return () => window.clearTimeout(timer)
+  }, [showSplash])
+
   return (
-    <div className="min-h-screen bg-neutral-100 text-neutral-950">
-      <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 border-r border-neutral-200 bg-white lg:block">
-        <div className="flex h-16 items-center border-b border-neutral-200 px-5">
-          <Link to="/" className="flex items-center gap-2 text-lg font-semibold">
-            <span className="flex size-8 items-center justify-center rounded-md bg-neutral-950 text-white">
-              <PackageSearch className="size-4" />
-            </span>
-            Dear
-          </Link>
+    <div className="min-h-screen bg-[#f3f3f1] text-neutral-950">
+      {showSplash && (
+        <div className="fixed inset-0 z-[100] flex animate-[splashOut_300ms_ease-in_1100ms_forwards] flex-col items-center justify-center bg-black text-white">
+          <SplashLogo />
+          <p className="mt-4 text-sm font-semibold">상품이 가진 이야기를 만나다</p>
         </div>
+      )}
 
-        <nav className="space-y-1 p-3">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                cn(
-                  "flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-950",
-                  isActive && "bg-neutral-950 text-white hover:bg-neutral-950 hover:text-white"
-                )
-              }
-            >
-              <item.icon className="size-4" />
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-      </aside>
+      <div className="mx-auto min-h-screen max-w-[1180px] bg-white shadow-[0_0_40px_rgba(0,0,0,0.05)]">
+        {!isProductDetail && (
+          <header className="sticky top-0 z-30 border-b border-neutral-100 bg-white/96 backdrop-blur">
+            <div className="flex h-16 items-center justify-between px-5 md:h-[72px] md:px-8">
+              <Link to="/" aria-label="D:EAR 홈">
+                <BrandWordmark className="text-[26px] md:text-[30px]" />
+              </Link>
 
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 backdrop-blur">
-          <div className="flex h-14 items-center justify-between px-4 lg:px-6">
-            <div className="flex items-center gap-2 lg:hidden">
-              <span className="flex size-8 items-center justify-center rounded-md bg-neutral-950 text-white">
-                <PackageSearch className="size-4" />
-              </span>
-              <span className="font-semibold">Dear</span>
-            </div>
-            <div className="hidden text-sm text-neutral-500 lg:block">
-              Gateway API 기반 커머스 클라이언트
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" aria-label="알림">
-                <Bell className="size-4" />
-              </Button>
-              <Button asChild size="sm">
-                <Link to="/login">
-                  <UserRound className="size-4" />
-                  로그인
+              <nav className="hidden items-center gap-1 md:flex">
+                {navItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-950",
+                        isActive && "bg-neutral-950 text-white hover:bg-neutral-950 hover:text-white"
+                      )
+                    }
+                  >
+                    <item.icon className="size-4" />
+                    {item.label}
+                  </NavLink>
+                ))}
+              </nav>
+
+              <div className="flex items-center gap-1">
+                <Link
+                  to="/search"
+                  className="flex size-10 items-center justify-center rounded-full transition-colors hover:bg-neutral-100"
+                  aria-label="상품 검색"
+                >
+                  <Search className="size-6 stroke-[1.8]" />
                 </Link>
-              </Button>
+                <button
+                  type="button"
+                  className="flex size-10 items-center justify-center rounded-full transition-colors hover:bg-neutral-100"
+                  aria-label="알림"
+                >
+                  <Bell className="size-6 stroke-[1.8]" />
+                </button>
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
+        )}
 
-        <main className="min-h-[calc(100vh-56px)] p-4 pb-20 lg:p-6">
+        <main className={cn("min-h-screen", !isProductDetail && "pb-20 md:pb-0")}>
           <Outlet />
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid h-16 grid-cols-3 border-t border-neutral-200 bg-white lg:hidden">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              cn(
-                "flex flex-col items-center justify-center gap-1 text-xs font-medium text-neutral-500",
-                isActive && "text-neutral-950"
-              )
-            }
-          >
-            <item.icon className="size-5" />
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
+      {!isProductDetail && (
+        <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto grid h-[72px] max-w-[680px] grid-cols-4 border-t border-neutral-200 bg-white/96 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) =>
+                cn(
+                  "relative flex min-w-0 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-neutral-400",
+                  isActive && "text-neutral-950"
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <span
+                    className={cn(
+                      "flex size-8 items-center justify-center rounded-md",
+                      isActive && "bg-[#58c8bd]/20"
+                    )}
+                  >
+                    {item.to === "/immediate" ? (
+                      <Zap
+                        className={cn(
+                          "size-6",
+                          isActive && "fill-[#ffd448] text-neutral-950"
+                        )}
+                      />
+                    ) : item.to === "/offers" ? (
+                      <ShoppingBag
+                        className={cn(
+                          "size-6",
+                          isActive && "fill-[#ef7469] text-neutral-950"
+                        )}
+                      />
+                    ) : (
+                      <item.icon className="size-6" />
+                    )}
+                  </span>
+                  <span className="truncate px-1">{item.label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+      )}
     </div>
   )
 }
