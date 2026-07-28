@@ -47,3 +47,21 @@ Set the production API Gateway URL in the deployment platform.
 ```env
 VITE_API_BASE_URL=https://api.example.com
 ```
+
+## iOS
+
+The web app is wrapped with Capacitor.
+
+- App name: `D:EAR`
+- Bundle ID: `com.grafanaon.dear`
+- Web build directory: `dist`
+
+Install the full Xcode application before opening or running the iOS target.
+
+```bash
+pnpm ios:sync
+pnpm ios:open
+```
+
+After changing the React application, run `pnpm ios:sync` again before
+building in Xcode.
