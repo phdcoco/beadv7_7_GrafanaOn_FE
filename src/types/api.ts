@@ -1,5 +1,4 @@
 export type ApiResponse<T> = {
-  success: boolean
   code: string
   message: string
   data: T
@@ -7,6 +6,8 @@ export type ApiResponse<T> = {
 
 export type PageResponse<T> = {
   content: T[]
+  number?: number
+  empty?: boolean
   page: number
   size: number
   totalElements: number

@@ -1,37 +1,39 @@
 import { FormEvent, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Search } from "lucide-react"
+import { Link } from "react-router-dom"
 import { searchProducts } from "@/api/searchApi"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
-import type { ProductSearchSort, ProductSearchTarget } from "@/types/product"
+import { formatDate, formatPrice } from "@/lib/format"
+import type { ProductSearchSort, ProductSearchType } from "@/types/product"
 
-const searchTargets: { value: ProductSearchTarget; label: string }[] = [
-  { value: "PRODUCT_NAME", label: "Product name" },
-  { value: "CATEGORY", label: "Category" },
-  { value: "STORY", label: "Story" },
+const searchTypes: { value: ProductSearchType; label: string }[] = [
+  { value: "PRODUCT_NAME", label: "상품명" },
+  { value: "CATEGORY", label: "카테고리" },
+  { value: "STORY_CONTENT", label: "스토리" },
 ]
 
 const searchSorts: { value: ProductSearchSort; label: string }[] = [
-  { value: "LATEST", label: "Latest" },
-  { value: "VIEW_COUNT", label: "Most viewed" },
-  { value: "PRICE_ASC", label: "Lowest price" },
-  { value: "PRICE_DESC", label: "Highest price" },
+  { value: "LATEST", label: "최신순" },
+  { value: "VIEW_COUNT", label: "조회수순" },
+  { value: "PRICE_ASC", label: "낮은 가격순" },
+  { value: "PRICE_DESC", label: "높은 가격순" },
 ]
 
 export function ProductSearchPage() {
   const [keywordInput, setKeywordInput] = useState("")
   const [keyword, setKeyword] = useState("")
-  const [target, setTarget] = useState<ProductSearchTarget>("PRODUCT_NAME")
+  const [type, setType] = useState<ProductSearchType>("PRODUCT_NAME")
   const [sort, setSort] = useState<ProductSearchSort>("LATEST")
 
   const productsQuery = useQuery({
-    queryKey: ["search-products", keyword, target, sort],
+    queryKey: ["search-products", keyword, type, sort],
     queryFn: () =>
       searchProducts({
         keyword,
-        target,
+        type,
         sort,
         page: 1,
         size: 20,
@@ -47,11 +49,8 @@ export function ProductSearchPage() {
   return (
     <section className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-[0]">Product search</h1>
-        <p className="max-w-2xl text-sm text-neutral-600">
-          Search products through the Gateway API. Product name is the default
-          target, and category or story can be selected when needed.
-        </p>
+        <p className="text-sm font-medium text-neutral-500">Search</p>
+        <h1 className="text-3xl font-semibold tracking-[0]">상품 검색</h1>
       </div>
 
       <form
@@ -65,10 +64,10 @@ export function ProductSearchPage() {
           required
         />
         <Select
-          value={target}
-          onChange={(event) => setTarget(event.target.value as ProductSearchTarget)}
+          value={type}
+          onChange={(event) => setType(event.target.value as ProductSearchType)}
         >
-          {searchTargets.map((item) => (
+          {searchTypes.map((item) => (
             <option key={item.value} value={item.value}>
               {item.label}
             </option>
@@ -86,7 +85,7 @@ export function ProductSearchPage() {
         </Select>
         <Button>
           <Search className="size-4" />
-          Search
+          검색
         </Button>
       </form>
 
@@ -99,42 +98,57 @@ export function ProductSearchPage() {
               <th className="px-4 py-3 font-medium">Category</th>
               <th className="px-4 py-3 font-medium">Price</th>
               <th className="px-4 py-3 font-medium">Views</th>
+              <th className="px-4 py-3 font-medium">Release</th>
             </tr>
           </thead>
           <tbody>
             {!keyword && (
               <tr>
-                <td className="px-4 py-8 text-center text-neutral-500" colSpan={5}>
-                  Enter a keyword to search.
+                <td className="px-4 py-8 text-center text-neutral-500" colSpan={6}>
+                  검색어를 입력해 주세요.
                 </td>
               </tr>
             )}
             {productsQuery.isLoading && (
               <tr>
-                <td className="px-4 py-8 text-center text-neutral-500" colSpan={5}>
-                  Searching...
+                <td className="px-4 py-8 text-center text-neutral-500" colSpan={6}>
+                  검색 중입니다.
                 </td>
               </tr>
             )}
             {productsQuery.data?.content.map((product) => (
-              <tr key={product.productId} className="border-t border-neutral-100">
-                <td className="px-4 py-3 font-medium">{product.productName}</td>
+              <tr
+                key={`${product.productId ?? product.modelNumber}-${product.productName}`}
+                className="border-t border-neutral-100"
+              >
+                <td className="px-4 py-3 font-medium">
+                  {product.productId ? (
+                    <Link to={`/products/${product.productId}`}>
+                      {product.productName}
+                    </Link>
+                  ) : (
+                    product.productName
+                  )}
+                </td>
                 <td className="px-4 py-3 text-neutral-600">
                   {product.modelNumber}
                 </td>
                 <td className="px-4 py-3 text-neutral-600">{product.category}</td>
                 <td className="px-4 py-3">
-                  {product.productPrice.toLocaleString()}
+                  {formatPrice(product.productPrice)}원
                 </td>
                 <td className="px-4 py-3 text-neutral-600">
                   {product.viewCount.toLocaleString()}
+                </td>
+                <td className="px-4 py-3 text-neutral-600">
+                  {formatDate(product.releaseDate)}
                 </td>
               </tr>
             ))}
             {productsQuery.data?.content.length === 0 && (
               <tr>
-                <td className="px-4 py-8 text-center text-neutral-500" colSpan={5}>
-                  No products found.
+                <td className="px-4 py-8 text-center text-neutral-500" colSpan={6}>
+                  검색 결과가 없습니다.
                 </td>
               </tr>
             )}

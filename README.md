@@ -32,3 +32,18 @@ The frontend should call the API Gateway, not each backend service directly.
 ```env
 VITE_API_BASE_URL=http://localhost:8080
 ```
+
+## Deployment
+
+Recommended build settings:
+
+```text
+Build command: pnpm build
+Output directory: dist
+```
+
+Set the production API Gateway URL in the deployment platform.
+
+```env
+VITE_API_BASE_URL=https://api.example.com
+```
