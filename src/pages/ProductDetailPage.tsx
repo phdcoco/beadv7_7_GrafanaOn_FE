@@ -20,7 +20,6 @@ import { addCartItem } from "@/api/cartApi"
 import { createOffer, createOfferSnapshot } from "@/api/offerApi"
 import { getMemberProfile } from "@/api/memberApi"
 import { getProductDetail } from "@/api/productApi"
-import { createPurchase } from "@/api/purchaseApi"
 import { addScrap, deleteScrap, getScraps } from "@/api/scrapApi"
 import { getApiErrorMessage } from "@/lib/apiClient"
 import { isAuthenticated } from "@/lib/authStorage"
@@ -36,8 +35,6 @@ const categoryLabels: Record<string, string> = {
   WINTER_SHOES: "패딩/퍼 신발",
 }
 
-type ActionMode = "PURCHASE" | "OFFER" | null
-
 export function ProductDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -49,7 +46,7 @@ export function ProductDetailPage() {
   const [activeIndex, setActiveIndex] = useState(0)
   const [furthestViewedIndex, setFurthestViewedIndex] = useState(0)
   const [scrapped, setScrapped] = useState(false)
-  const [actionMode, setActionMode] = useState<ActionMode>(null)
+  const [offerFormOpen, setOfferFormOpen] = useState(false)
   const [delivery, setDelivery] = useState("")
   const [offerTitle, setOfferTitle] = useState("")
   const [offerStory, setOfferStory] = useState("")
@@ -112,15 +109,6 @@ export function ProductDetailPage() {
     },
   })
 
-  const purchaseMutation = useMutation({
-    mutationFn: () =>
-      createPurchase({ productId: parsedProductId, delivery: delivery.trim() }),
-    onSuccess: (purchase) => {
-      setActionMode(null)
-      setSuccessMessage(`주문 ${purchase.number}이 생성되었습니다.`)
-    },
-  })
-
   const cartMutation = useMutation({
     mutationFn: () => addCartItem(parsedProductId),
     onSuccess: () => {
@@ -145,7 +133,7 @@ export function ProductDetailPage() {
       })
     },
     onSuccess: (offer) => {
-      setActionMode(null)
+      setOfferFormOpen(false)
       setSuccessMessage(`오퍼 ${offer.number}이 등록되었습니다.`)
     },
   })
@@ -235,28 +223,29 @@ export function ProductDetailPage() {
     setSuccessMessage("상품 링크를 복사했습니다.")
   }
 
-  function openAction(mode: Exclude<ActionMode, null>) {
+  function openOfferForm() {
     if (!requireLogin()) {
       return
     }
 
     setSuccessMessage("")
-    setActionMode(mode)
+    setOfferFormOpen(true)
+  }
+
+  function openCheckout() {
+    if (requireLogin()) {
+      navigate(`/checkout/${parsedProductId}`)
+    }
   }
 
   function submitAction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (actionMode === "PURCHASE") {
-      purchaseMutation.mutate()
-      return
-    }
-
     offerMutation.mutate()
   }
 
-  const actionPending = purchaseMutation.isPending || offerMutation.isPending
-  const actionError = purchaseMutation.error ?? offerMutation.error
+  const actionPending = offerMutation.isPending
+  const actionError = offerMutation.error
 
   return (
     <div className="mx-auto min-h-screen max-w-[1180px] bg-white">
@@ -448,7 +437,7 @@ export function ProductDetailPage() {
               <button
                 type="button"
                 className="h-12 rounded-md bg-neutral-950 text-sm font-bold text-white"
-                onClick={() => openAction("PURCHASE")}
+                onClick={openCheckout}
               >
                 즉시 구매하기
               </button>
@@ -483,7 +472,7 @@ export function ProductDetailPage() {
             <button
               type="button"
               className="h-12 w-full rounded-md bg-brand text-sm font-bold text-neutral-950 hover:brightness-95"
-              onClick={() => openAction("OFFER")}
+              onClick={openOfferForm}
             >
               오퍼 작성하기
             </button>
@@ -519,56 +508,50 @@ export function ProductDetailPage() {
         </div>
       )}
 
-      {actionMode && (
+      {offerFormOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 md:items-center">
           <button
             type="button"
             className="absolute inset-0"
             aria-label="거래 창 닫기"
-            onClick={() => setActionMode(null)}
+            onClick={() => setOfferFormOpen(false)}
           />
           <section className="relative z-10 w-full max-w-lg rounded-t-lg bg-white p-5 md:rounded-lg md:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-bold text-neutral-400">
-                  {actionMode === "PURCHASE" ? "IMMEDIATE" : "OFFER"}
+                  OFFER
                 </p>
-                <h2 className="mt-1 text-xl font-black">
-                  {actionMode === "PURCHASE" ? "즉시구매 주문" : "나의 오퍼 작성"}
-                </h2>
+                <h2 className="mt-1 text-xl font-black">나의 오퍼 작성</h2>
               </div>
               <button
                 type="button"
                 className="flex size-9 items-center justify-center rounded-full hover:bg-neutral-100"
                 aria-label="닫기"
-                onClick={() => setActionMode(null)}
+                onClick={() => setOfferFormOpen(false)}
               >
                 <X className="size-5" />
               </button>
             </div>
 
             <form className="mt-6 space-y-4" onSubmit={submitAction}>
-              {actionMode === "OFFER" && (
-                <>
-                  <FormField
-                    label="이야기 제목"
-                    value={offerTitle}
-                    placeholder="이 신발을 만나고 싶은 이유"
-                    maxLength={120}
-                    onChange={setOfferTitle}
-                  />
-                  <label className="block">
-                    <span className="mb-2 block text-xs font-bold">나의 이야기</span>
-                    <textarea
-                      value={offerStory}
-                      onChange={(event) => setOfferStory(event.target.value)}
-                      className="min-h-28 w-full resize-none rounded-md border border-neutral-300 px-3 py-3 text-sm outline-none focus:border-brand"
-                      placeholder="판매자에게 전할 이야기를 적어 주세요"
-                      required
-                    />
-                  </label>
-                </>
-              )}
+              <FormField
+                label="이야기 제목"
+                value={offerTitle}
+                placeholder="이 신발을 만나고 싶은 이유"
+                maxLength={120}
+                onChange={setOfferTitle}
+              />
+              <label className="block">
+                <span className="mb-2 block text-xs font-bold">나의 이야기</span>
+                <textarea
+                  value={offerStory}
+                  onChange={(event) => setOfferStory(event.target.value)}
+                  className="min-h-28 w-full resize-none rounded-md border border-neutral-300 px-3 py-3 text-sm outline-none focus:border-brand"
+                  placeholder="판매자에게 전할 이야기를 적어 주세요"
+                  required
+                />
+              </label>
 
               <FormField
                 label="배송지"
@@ -599,9 +582,7 @@ export function ProductDetailPage() {
                 {actionPending && <LoaderCircle className="size-4 animate-spin" />}
                 {actionPending
                   ? "처리 중..."
-                  : actionMode === "PURCHASE"
-                    ? "주문 생성하기"
-                    : "오퍼 보내기"}
+                  : "오퍼 보내기"}
               </button>
             </form>
           </section>

@@ -1,11 +1,13 @@
 import { createBrowserRouter } from "react-router-dom"
 import { AppLayout } from "@/components/layout/AppLayout"
 import { CartPage } from "@/pages/CartPage"
+import { CheckoutPage } from "@/pages/CheckoutPage"
 import { LoginPage } from "@/pages/LoginPage"
 import { ImmediatePurchasePage } from "@/pages/ImmediatePurchasePage"
 import { OfferPurchasePage } from "@/pages/OfferPurchasePage"
 import { ProductDetailPage } from "@/pages/ProductDetailPage"
 import { ProductListPage } from "@/pages/ProductListPage"
+import { PurchasePaymentResultPage } from "@/pages/PurchasePaymentResultPage"
 import { ProductSearchPage } from "@/pages/ProductSearchPage"
 import { ProfilePage } from "@/pages/ProfilePage"
 import { SignUpPage } from "@/pages/SignUpPage"
@@ -25,6 +27,14 @@ export const router = createBrowserRouter([
       {
         path: "/cart",
         element: <CartPage />,
+      },
+      {
+        path: "/checkout/:productId",
+        element: <CheckoutPage />,
+      },
+      {
+        path: "/payments/purchases/:purchaseId",
+        element: <PurchasePaymentResultPage />,
       },
       {
         path: "/immediate",

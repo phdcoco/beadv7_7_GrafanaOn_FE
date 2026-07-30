@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import {
   ArrowRight,
   Check,
@@ -18,6 +18,7 @@ import { isAuthenticated } from "@/lib/authStorage"
 import { formatPrice } from "@/lib/format"
 
 export function CartPage() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const loggedIn = isAuthenticated()
   const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(
@@ -50,6 +51,10 @@ export function CartPage() {
   const selectedTotal = items
     .filter((item) => selectedProductIds.has(item.productId))
     .reduce((total, item) => total + item.productPrice, 0)
+  const selectedItem = items.find((item) =>
+    selectedProductIds.has(item.productId)
+  )
+  const canCheckout = selectedProductIds.size === 1 && Boolean(selectedItem)
   const mutationPending =
     deleteItemsMutation.isPending || deleteAllMutation.isPending
   const mutationError = deleteItemsMutation.error ?? deleteAllMutation.error
@@ -127,14 +132,26 @@ export function CartPage() {
               <CartCheckbox checked={allSelected} onChange={toggleAll} />
               전체 선택
             </label>
-            <button
-              type="button"
-              className="text-xs font-bold text-neutral-500 hover:text-neutral-950"
-              disabled={mutationPending}
-              onClick={() => deleteAllMutation.mutate()}
-            >
-              전체 비우기
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                className="text-xs font-bold text-neutral-500 hover:text-neutral-950 disabled:text-neutral-300"
+                disabled={selectedProductIds.size === 0 || mutationPending}
+                onClick={() =>
+                  deleteItemsMutation.mutate(Array.from(selectedProductIds))
+                }
+              >
+                선택 삭제
+              </button>
+              <button
+                type="button"
+                className="text-xs font-bold text-neutral-500 hover:text-neutral-950"
+                disabled={mutationPending}
+                onClick={() => deleteAllMutation.mutate()}
+              >
+                전체 비우기
+              </button>
+            </div>
           </div>
 
           <section className="divide-y divide-neutral-100">
@@ -191,10 +208,10 @@ export function CartPage() {
                   </p>
 
                   <Link
-                    to={`/products/${item.productId}?saleType=IMMEDIATE`}
+                    to={`/checkout/${item.productId}?from=cart`}
                     className="mt-auto flex h-9 items-center justify-center gap-1 rounded-md border border-neutral-300 text-xs font-bold hover:border-neutral-950"
                   >
-                    구매 화면으로
+                    바로 결제
                     <ArrowRight className="size-3.5" />
                   </Link>
                 </div>
@@ -220,16 +237,22 @@ export function CartPage() {
               <p className="mt-0.5 text-lg font-black">
                 {formatPrice(selectedTotal)}원
               </p>
+              {selectedProductIds.size > 1 && (
+                <p className="mt-0.5 text-[10px] text-neutral-400">
+                  결제할 상품 1개만 선택해 주세요.
+                </p>
+              )}
             </div>
             <button
               type="button"
-              className="h-11 rounded-md border border-neutral-300 px-4 text-sm font-bold disabled:text-neutral-300"
-              disabled={selectedProductIds.size === 0 || mutationPending}
+              className="h-11 min-w-28 rounded-md bg-brand px-4 text-sm font-black text-neutral-950 disabled:bg-neutral-200 disabled:text-neutral-400"
+              disabled={!canCheckout || mutationPending}
               onClick={() =>
-                deleteItemsMutation.mutate(Array.from(selectedProductIds))
+                selectedItem &&
+                navigate(`/checkout/${selectedItem.productId}?from=cart`)
               }
             >
-              선택 삭제
+              {selectedProductIds.size > 1 ? "1개만 선택" : "결제하기"}
             </button>
           </div>
         </div>

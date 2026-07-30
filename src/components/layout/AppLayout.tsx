@@ -27,7 +27,10 @@ export function AppLayout() {
   const [showSplash, setShowSplash] = useState(
     () => sessionStorage.getItem("dear-splash-seen") !== "true"
   )
-  const isProductDetail = pathname.startsWith("/products/")
+  const isImmersiveFlow =
+    pathname.startsWith("/products/") ||
+    pathname.startsWith("/checkout/") ||
+    pathname.startsWith("/payments/purchases/")
 
   useEffect(() => {
     if (!showSplash) {
@@ -52,7 +55,7 @@ export function AppLayout() {
       )}
 
       <div className="mx-auto min-h-screen max-w-[1180px] bg-white shadow-[0_0_40px_rgba(0,0,0,0.05)]">
-        {!isProductDetail && (
+        {!isImmersiveFlow && (
           <header className="sticky top-0 z-30 border-b border-neutral-100 bg-white/96 backdrop-blur">
             <div className="flex h-16 items-center justify-between px-5 md:h-[72px] md:px-8">
               <Link to="/" aria-label="D:EAR 홈">
@@ -92,12 +95,12 @@ export function AppLayout() {
           </header>
         )}
 
-        <main className={cn("min-h-screen", !isProductDetail && "pb-20 md:pb-0")}>
+        <main className={cn("min-h-screen", !isImmersiveFlow && "pb-20 md:pb-0")}>
           <Outlet />
         </main>
       </div>
 
-      {!isProductDetail && (
+      {!isImmersiveFlow && (
         <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto grid h-[72px] max-w-[680px] grid-cols-4 border-t border-neutral-200 bg-white/96 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
           {navItems.map((item) => (
             <NavLink
