@@ -1,12 +1,12 @@
 import { apiClient } from "@/lib/apiClient"
+import { unwrapData } from "@/lib/apiResponse"
+import { USE_MOCKS } from "@/lib/runtime"
 import { mockProducts } from "@/data/mockProducts"
 import type { ApiResponse, PageResponse } from "@/types/api"
 import type { SearchProduct, SearchProductsParams } from "@/types/product"
 
-const useMocks = import.meta.env.VITE_USE_MOCKS !== "false"
-
 export async function searchProducts(params: SearchProductsParams) {
-  if (useMocks) {
+  if (USE_MOCKS) {
     const normalizedKeyword = params.keyword.trim().toLowerCase()
     const filteredProducts = mockProducts.filter((product) => {
       if (product.status !== "ON_SALE") {
@@ -60,5 +60,5 @@ export async function searchProducts(params: SearchProductsParams) {
     { params }
   )
 
-  return data.data
+  return unwrapData(data)
 }

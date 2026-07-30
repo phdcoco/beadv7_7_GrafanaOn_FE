@@ -1,7 +1,7 @@
 export type ApiResponse<T> = {
   code: string
   message: string
-  data: T
+  data?: T
 }
 
 export type PageResponse<T> = {

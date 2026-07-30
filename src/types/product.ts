@@ -6,6 +6,14 @@ export type ProductSaleType = "IMMEDIATE" | "OFFER"
 
 export type ProductStatus = "PREPARING" | "ON_SALE" | "SOLD_OUT"
 
+export type ProductCategory =
+  | "SNEAKERS"
+  | "SPORTS_SHOES"
+  | "DRESS_SHOES"
+  | "BOOTS"
+  | "SANDALS_SLIDES"
+  | "WINTER_SHOES"
+
 export type ProductSummary = {
   id: number
   saleType: ProductSaleType
@@ -24,7 +32,7 @@ export type ProductImage = {
 }
 
 export type ProductDetail = {
-  productId?: number
+  productId: number
   saleType?: ProductSaleType
   sellerId: number
   images: ProductImage[]
@@ -62,4 +70,5 @@ export type SearchProductsParams = {
 export type GetProductsParams = {
   saleType?: ProductSaleType
   status?: ProductStatus
+  createdAt?: string
 }

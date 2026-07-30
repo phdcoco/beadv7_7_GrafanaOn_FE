@@ -1,4 +1,6 @@
 import { apiClient } from "@/lib/apiClient"
+import { unwrapData } from "@/lib/apiResponse"
+import { USE_MOCKS } from "@/lib/runtime"
 import {
   createMockProductDetail,
   mockProducts,
@@ -7,13 +9,12 @@ import type { ApiResponse } from "@/types/api"
 import type {
   GetProductsParams,
   ProductDetail,
+  ProductSaleType,
   ProductSummary,
 } from "@/types/product"
 
-const useMocks = import.meta.env.VITE_USE_MOCKS !== "false"
-
 export async function getProducts(params?: GetProductsParams) {
-  if (useMocks) {
+  if (USE_MOCKS) {
     return mockProducts.filter((product) => {
       const matchesSaleType =
         !params?.saleType || product.saleType === params.saleType
@@ -28,11 +29,14 @@ export async function getProducts(params?: GetProductsParams) {
     { params }
   )
 
-  return data.data
+  return unwrapData(data)
 }
 
-export async function getProductDetail(productId: number) {
-  if (useMocks) {
+export async function getProductDetail(
+  productId: number,
+  saleType?: ProductSaleType
+) {
+  if (USE_MOCKS) {
     const product = createMockProductDetail(productId)
 
     if (!product) {
@@ -46,5 +50,9 @@ export async function getProductDetail(productId: number) {
     `/api/products/${productId}`
   )
 
-  return data.data
+  return {
+    ...unwrapData(data),
+    productId,
+    saleType,
+  }
 }

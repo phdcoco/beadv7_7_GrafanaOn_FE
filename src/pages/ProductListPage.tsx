@@ -7,6 +7,7 @@ import { ProductCard } from "@/components/product/ProductCard"
 import { StoryCard } from "@/components/product/StoryCard"
 import { UpcomingRelease } from "@/components/product/UpcomingRelease"
 import { offerStories } from "@/data/mockProducts"
+import { USE_MOCKS } from "@/lib/runtime"
 
 type HomeTab = "ALL" | "IMMEDIATE" | "OFFER" | "UPCOMING"
 
@@ -87,21 +88,37 @@ export function ProductListPage() {
             to="/offers"
           />
           <div className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-4 md:px-8">
-            {offerStories
-              .filter((story) =>
-                offerProducts.data
-                  ? offerProducts.data.some(
-                      (product) => product.id === story.productId
-                    )
-                  : true
-              )
-              .map((story) => (
-                <div key={story.productId} className="snap-start">
-                  <StoryCard {...story} horizontal />
-                </div>
+            {offerProducts.isLoading &&
+              Array.from({ length: 3 }).map((_, index) => (
+                <ProductSkeleton key={index} />
               ))}
+            {USE_MOCKS
+              ? offerStories
+                  .filter((story) =>
+                    offerProducts.data
+                      ? offerProducts.data.some(
+                          (product) => product.id === story.productId
+                        )
+                      : true
+                  )
+                  .map((story) => (
+                    <div key={story.productId} className="snap-start">
+                      <StoryCard {...story} horizontal />
+                    </div>
+                  ))
+              : offerProducts.data?.map((product) => (
+                  <div key={product.id} className="snap-start">
+                    <ProductCard product={product} />
+                  </div>
+                ))}
           </div>
         </section>
+      )}
+
+      {(immediateProducts.isError || offerProducts.isError) && (
+        <p className="px-5 py-8 text-center text-sm text-neutral-500 md:px-8">
+          상품을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+        </p>
       )}
 
       {!showUpcoming && (

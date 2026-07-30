@@ -1,18 +1,23 @@
 import { type FormEvent, useState } from "react"
 import { useMutation } from "@tanstack/react-query"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowRight, LockKeyhole, Mail } from "lucide-react"
 import { login } from "@/api/authApi"
 import { BrandWordmark } from "@/components/brand/Brand"
+import { getApiErrorMessage } from "@/lib/apiClient"
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
 
   const loginMutation = useMutation({
     mutationFn: login,
-    onSuccess: () => navigate("/"),
+    onSuccess: () => {
+      const redirect = searchParams.get("redirect")
+      navigate(redirect?.startsWith("/") ? redirect : "/")
+    },
   })
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -77,7 +82,7 @@ export function LoginPage() {
 
             {loginMutation.isError && (
               <p className="text-sm text-red-600">
-                이메일 또는 비밀번호를 확인해 주세요.
+                {getApiErrorMessage(loginMutation.error)}
               </p>
             )}
 

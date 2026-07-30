@@ -1,4 +1,7 @@
 import { apiClient } from "@/lib/apiClient"
+import { clearAccessToken, setAccessToken } from "@/lib/authStorage"
+import { unwrapData } from "@/lib/apiResponse"
+import { USE_MOCKS } from "@/lib/runtime"
 import type { ApiResponse } from "@/types/api"
 import type {
   LoginRequest,
@@ -7,12 +10,10 @@ import type {
   TokenResponse,
 } from "@/types/auth"
 
-const useMocks = import.meta.env.VITE_USE_MOCKS !== "false"
-
 export async function login(request: LoginRequest) {
-  if (useMocks) {
+  if (USE_MOCKS) {
     const token = `mock-access-token-${request.email}`
-    localStorage.setItem("accessToken", token)
+    setAccessToken(token)
 
     return {
       accessToken: token,
@@ -26,13 +27,14 @@ export async function login(request: LoginRequest) {
     request
   )
 
-  localStorage.setItem("accessToken", data.data.accessToken)
+  const token = unwrapData(data)
+  setAccessToken(token.accessToken)
 
-  return data.data
+  return token
 }
 
 export async function signUp(request: SignUpRequest) {
-  if (useMocks) {
+  if (USE_MOCKS) {
     return {
       memberId: 1,
       email: request.email,
@@ -45,23 +47,26 @@ export async function signUp(request: SignUpRequest) {
     request
   )
 
-  return data.data
+  return unwrapData(data)
 }
 
 export async function logout() {
-  if (useMocks) {
-    localStorage.removeItem("accessToken")
+  if (USE_MOCKS) {
+    clearAccessToken()
     return
   }
 
-  await apiClient.post<ApiResponse<void>>("/api/auth/logout")
-  localStorage.removeItem("accessToken")
+  try {
+    await apiClient.post<ApiResponse<void>>("/api/auth/logout")
+  } finally {
+    clearAccessToken()
+  }
 }
 
 export async function reissueToken() {
-  if (useMocks) {
+  if (USE_MOCKS) {
     const token = "mock-reissued-access-token"
-    localStorage.setItem("accessToken", token)
+    setAccessToken(token)
 
     return {
       accessToken: token,
@@ -74,7 +79,18 @@ export async function reissueToken() {
     "/api/auth/reissue"
   )
 
-  localStorage.setItem("accessToken", data.data.accessToken)
+  const token = unwrapData(data)
+  setAccessToken(token.accessToken)
 
-  return data.data
+  return token
+}
+
+export async function withdraw() {
+  if (USE_MOCKS) {
+    clearAccessToken()
+    return
+  }
+
+  await apiClient.delete<ApiResponse<void>>("/api/auth/withdraw")
+  clearAccessToken()
 }

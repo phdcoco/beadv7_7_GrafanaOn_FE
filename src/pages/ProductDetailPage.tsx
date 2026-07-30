@@ -1,17 +1,24 @@
-import { useRef, useState, type UIEvent } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { Link, useParams, useSearchParams } from "react-router-dom"
+import { useEffect, useRef, useState, type FormEvent, type UIEvent } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import {
   ArrowLeft,
   Bookmark,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Eye,
-  MessageCircleMore,
+  LoaderCircle,
   Share2,
-  ShoppingBag,
+  X,
 } from "lucide-react"
+import { createOffer, createOfferSnapshot } from "@/api/offerApi"
+import { getMemberProfile } from "@/api/memberApi"
 import { getProductDetail } from "@/api/productApi"
+import { createPurchase } from "@/api/purchaseApi"
+import { addScrap, deleteScrap, getScraps } from "@/api/scrapApi"
+import { getApiErrorMessage } from "@/lib/apiClient"
+import { isAuthenticated } from "@/lib/authStorage"
 import { formatDate, formatPrice } from "@/lib/format"
 import type { ProductSaleType } from "@/types/product"
 
@@ -24,17 +31,98 @@ const categoryLabels: Record<string, string> = {
   WINTER_SHOES: "패딩/퍼 신발",
 }
 
+type ActionMode = "PURCHASE" | "OFFER" | null
+
 export function ProductDetailPage() {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { productId } = useParams()
   const [searchParams] = useSearchParams()
   const parsedProductId = Number(productId)
+  const querySaleType = searchParams.get("saleType") as ProductSaleType | null
+  const loggedIn = isAuthenticated()
   const [activeIndex, setActiveIndex] = useState(0)
+  const [scrapped, setScrapped] = useState(false)
+  const [actionMode, setActionMode] = useState<ActionMode>(null)
+  const [delivery, setDelivery] = useState("")
+  const [offerTitle, setOfferTitle] = useState("")
+  const [offerStory, setOfferStory] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
   const sliderRef = useRef<HTMLDivElement>(null)
 
   const productQuery = useQuery({
-    queryKey: ["product-detail", parsedProductId],
-    queryFn: () => getProductDetail(parsedProductId),
+    queryKey: ["product-detail", parsedProductId, querySaleType],
+    queryFn: () =>
+      getProductDetail(parsedProductId, querySaleType ?? undefined),
     enabled: Number.isFinite(parsedProductId),
+  })
+
+  const profileQuery = useQuery({
+    queryKey: ["member-profile", "me"],
+    queryFn: () => getMemberProfile(),
+    enabled: loggedIn && actionMode !== null,
+  })
+
+  const scrapsQuery = useQuery({
+    queryKey: ["scraps", "me", "lookup"],
+    queryFn: () => getScraps(0, 100),
+    enabled: loggedIn,
+  })
+
+  useEffect(() => {
+    if (!delivery && profileQuery.data?.defaultShippingAddress) {
+      setDelivery(profileQuery.data.defaultShippingAddress)
+    }
+  }, [delivery, profileQuery.data])
+
+  useEffect(() => {
+    if (!scrapsQuery.data) {
+      return
+    }
+
+    setScrapped(
+      scrapsQuery.data.scrapList.some((scrap) => scrap.id === parsedProductId)
+    )
+  }, [parsedProductId, scrapsQuery.data])
+
+  const scrapMutation = useMutation({
+    mutationFn: async () => {
+      if (scrapped) {
+        await deleteScrap(parsedProductId)
+        return
+      }
+
+      await addScrap(parsedProductId)
+    },
+    onSuccess: () => {
+      setScrapped((current) => !current)
+      void queryClient.invalidateQueries({ queryKey: ["scraps", "me"] })
+    },
+  })
+
+  const purchaseMutation = useMutation({
+    mutationFn: () =>
+      createPurchase({ productId: parsedProductId, delivery: delivery.trim() }),
+    onSuccess: (purchase) => {
+      setActionMode(null)
+      setSuccessMessage(`주문 ${purchase.number}이 생성되었습니다.`)
+    },
+  })
+
+  const offerMutation = useMutation({
+    mutationFn: async () => {
+      const snapshot = await createOfferSnapshot(parsedProductId)
+      return createOffer({
+        snapshotId: snapshot.snapshotId,
+        title: offerTitle.trim(),
+        story: offerStory.trim(),
+        delivery: delivery.trim(),
+      })
+    },
+    onSuccess: (offer) => {
+      setActionMode(null)
+      setSuccessMessage(`오퍼 ${offer.number}이 등록되었습니다.`)
+    },
   })
 
   if (productQuery.isLoading) {
@@ -45,17 +133,34 @@ export function ProductDetailPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
         <p className="text-sm font-semibold">상품 상세를 불러오지 못했습니다.</p>
-        <Link to="/" className="text-sm text-neutral-500 underline">
-          홈으로 돌아가기
+        <p className="text-xs text-neutral-500">
+          {loggedIn
+            ? getApiErrorMessage(productQuery.error)
+            : "상품 상세를 보려면 로그인이 필요합니다."}
+        </p>
+        <Link
+          to={loggedIn ? "/" : `/login?redirect=/products/${parsedProductId}?saleType=${querySaleType ?? "IMMEDIATE"}`}
+          className="text-sm font-bold underline"
+        >
+          {loggedIn ? "홈으로 돌아가기" : "로그인하기"}
         </Link>
       </div>
     )
   }
 
   const product = productQuery.data
-  const querySaleType = searchParams.get("saleType") as ProductSaleType | null
-  const saleType = product.saleType ?? querySaleType ?? "IMMEDIATE"
+  const saleType = product.saleType ?? querySaleType
   const isOffer = saleType === "OFFER"
+
+  function requireLogin() {
+    if (loggedIn) {
+      return true
+    }
+
+    const redirect = `${window.location.pathname}${window.location.search}`
+    navigate(`/login?redirect=${encodeURIComponent(redirect)}`)
+    return false
+  }
 
   function handleSlide(event: UIEvent<HTMLDivElement>) {
     const target = event.currentTarget
@@ -70,6 +175,47 @@ export function ProductDetailPage() {
       behavior: "smooth",
     })
   }
+
+  function handleScrap() {
+    if (requireLogin()) {
+      scrapMutation.mutate()
+    }
+  }
+
+  async function handleShare() {
+    const shareData = { title: product.name, url: window.location.href }
+
+    if (navigator.share) {
+      await navigator.share(shareData)
+      return
+    }
+
+    await navigator.clipboard.writeText(window.location.href)
+    setSuccessMessage("상품 링크를 복사했습니다.")
+  }
+
+  function openAction(mode: Exclude<ActionMode, null>) {
+    if (!requireLogin()) {
+      return
+    }
+
+    setSuccessMessage("")
+    setActionMode(mode)
+  }
+
+  function submitAction(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (actionMode === "PURCHASE") {
+      purchaseMutation.mutate()
+      return
+    }
+
+    offerMutation.mutate()
+  }
+
+  const actionPending = purchaseMutation.isPending || offerMutation.isPending
+  const actionError = purchaseMutation.error ?? offerMutation.error
 
   return (
     <div className="mx-auto min-h-screen max-w-[1180px] bg-white">
@@ -87,14 +233,19 @@ export function ProductDetailPage() {
           <button
             type="button"
             className="flex size-10 items-center justify-center rounded-full hover:bg-neutral-100"
-            aria-label="상품 저장"
+            aria-label={scrapped ? "상품 저장 해제" : "상품 저장"}
+            disabled={scrapMutation.isPending}
+            onClick={handleScrap}
           >
-            <Bookmark className="size-5" />
+            <Bookmark
+              className={`size-5 ${scrapped ? "fill-neutral-950" : ""}`}
+            />
           </button>
           <button
             type="button"
             className="flex size-10 items-center justify-center rounded-full hover:bg-neutral-100"
             aria-label="공유"
+            onClick={() => void handleShare()}
           >
             <Share2 className="size-5" />
           </button>
@@ -186,7 +337,7 @@ export function ProductDetailPage() {
               </span>
             </div>
             <h1 className="mt-2 text-xl font-extrabold leading-7">{product.name}</h1>
-            <p className="mt-3 text-2xl font-black">
+            <p className="mt-2 text-2xl font-black">
               {formatPrice(product.price)}원
             </p>
             <span
@@ -196,7 +347,11 @@ export function ProductDetailPage() {
                   : "bg-[#fff0ee] text-[#df5549]"
               }`}
             >
-              {isOffer ? "오퍼구매" : "즉시구매"}
+              {saleType
+                ? isOffer
+                  ? "오퍼구매"
+                  : "즉시구매"
+                : "판매방식 미확인"}
             </span>
           </div>
 
@@ -233,43 +388,152 @@ export function ProductDetailPage() {
       </div>
 
       <div className="sticky bottom-0 z-30 border-t border-neutral-200 bg-white/97 p-3 backdrop-blur">
-        <div className="mx-auto grid max-w-[760px] grid-cols-[1fr_1.5fr] gap-2">
-          {isOffer ? (
-            <>
-              <button
-                type="button"
-                className="flex h-12 items-center justify-center gap-2 rounded-md border border-neutral-300 text-sm font-bold"
-              >
-                <MessageCircleMore className="size-4" />
-                오퍼 보기
-              </button>
-              <button
-                type="button"
-                className="h-12 rounded-md bg-[#5b72f2] text-sm font-bold text-white"
-              >
-                오퍼 작성하기
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="flex h-12 items-center justify-center gap-2 rounded-md border border-neutral-300 text-sm font-bold"
-              >
-                <ShoppingBag className="size-4" />
-                장바구니
-              </button>
-              <button
-                type="button"
-                className="h-12 rounded-md bg-neutral-950 text-sm font-bold text-white"
-              >
-                즉시 구매하기
-              </button>
-            </>
+        <div className="mx-auto max-w-[760px]">
+          {saleType && (
+            <button
+              type="button"
+              className={`h-12 w-full rounded-md text-sm font-bold text-white ${
+                isOffer ? "bg-[#5b72f2]" : "bg-neutral-950"
+              }`}
+              onClick={() => openAction(isOffer ? "OFFER" : "PURCHASE")}
+            >
+              {isOffer ? "오퍼 작성하기" : "즉시 구매하기"}
+            </button>
           )}
         </div>
       </div>
+
+      {successMessage && (
+        <div className="fixed inset-x-4 bottom-20 z-40 mx-auto flex max-w-md items-center gap-2 rounded-md bg-neutral-950 px-4 py-3 text-sm font-semibold text-white shadow-lg">
+          <CheckCircle2 className="size-4 shrink-0 text-[#70d6cc]" />
+          <span className="flex-1">{successMessage}</span>
+          <button
+            type="button"
+            aria-label="알림 닫기"
+            onClick={() => setSuccessMessage("")}
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
+
+      {actionMode && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 md:items-center">
+          <button
+            type="button"
+            className="absolute inset-0"
+            aria-label="거래 창 닫기"
+            onClick={() => setActionMode(null)}
+          />
+          <section className="relative z-10 w-full max-w-lg rounded-t-lg bg-white p-5 md:rounded-lg md:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold text-neutral-400">
+                  {actionMode === "PURCHASE" ? "IMMEDIATE" : "OFFER"}
+                </p>
+                <h2 className="mt-1 text-xl font-black">
+                  {actionMode === "PURCHASE" ? "즉시구매 주문" : "나의 오퍼 작성"}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="flex size-9 items-center justify-center rounded-full hover:bg-neutral-100"
+                aria-label="닫기"
+                onClick={() => setActionMode(null)}
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <form className="mt-6 space-y-4" onSubmit={submitAction}>
+              {actionMode === "OFFER" && (
+                <>
+                  <FormField
+                    label="이야기 제목"
+                    value={offerTitle}
+                    placeholder="이 신발을 만나고 싶은 이유"
+                    maxLength={120}
+                    onChange={setOfferTitle}
+                  />
+                  <label className="block">
+                    <span className="mb-2 block text-xs font-bold">나의 이야기</span>
+                    <textarea
+                      value={offerStory}
+                      onChange={(event) => setOfferStory(event.target.value)}
+                      className="min-h-28 w-full resize-none rounded-md border border-neutral-300 px-3 py-3 text-sm outline-none focus:border-neutral-950"
+                      placeholder="판매자에게 전할 이야기를 적어 주세요"
+                      required
+                    />
+                  </label>
+                </>
+              )}
+
+              <FormField
+                label="배송지"
+                value={delivery}
+                placeholder="상품을 받을 주소"
+                maxLength={255}
+                onChange={setDelivery}
+              />
+
+              <div className="flex items-center justify-between border-y border-neutral-100 py-4">
+                <span className="text-sm text-neutral-500">상품 금액</span>
+                <strong className="text-lg">{formatPrice(product.price)}원</strong>
+              </div>
+
+              {actionError && (
+                <p className="text-sm text-red-600">
+                  {getApiErrorMessage(actionError)}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                className={`flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-bold text-white ${
+                  actionMode === "OFFER" ? "bg-[#5b72f2]" : "bg-neutral-950"
+                }`}
+                disabled={actionPending}
+              >
+                {actionPending && <LoaderCircle className="size-4 animate-spin" />}
+                {actionPending
+                  ? "처리 중..."
+                  : actionMode === "PURCHASE"
+                    ? "주문 생성하기"
+                    : "오퍼 보내기"}
+              </button>
+            </form>
+          </section>
+        </div>
+      )}
     </div>
+  )
+}
+
+function FormField({
+  label,
+  value,
+  placeholder,
+  maxLength,
+  onChange,
+}: {
+  label: string
+  value: string
+  placeholder: string
+  maxLength: number
+  onChange: (value: string) => void
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-xs font-bold">{label}</span>
+      <input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-12 w-full rounded-md border border-neutral-300 px-3 text-sm outline-none focus:border-neutral-950"
+        placeholder={placeholder}
+        maxLength={maxLength}
+        required
+      />
+    </label>
   )
 }
 

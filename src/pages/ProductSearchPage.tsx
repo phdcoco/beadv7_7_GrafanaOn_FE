@@ -1,10 +1,11 @@
 import { type FormEvent, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowLeft, Search, SlidersHorizontal, X } from "lucide-react"
+import { ArrowLeft, ImageOff, Search, SlidersHorizontal, X } from "lucide-react"
 import { Link } from "react-router-dom"
 import { searchProducts } from "@/api/searchApi"
 import { mockProducts } from "@/data/mockProducts"
 import { formatPrice } from "@/lib/format"
+import { USE_MOCKS } from "@/lib/runtime"
 import type { ProductSearchSort, ProductSearchType } from "@/types/product"
 
 const searchTypes: { value: ProductSearchType; label: string }[] = [
@@ -142,9 +143,9 @@ export function ProductSearchPage() {
 
       <div className="grid divide-y divide-neutral-100 md:grid-cols-2 md:divide-x md:divide-y-0">
         {productsQuery.data?.content.map((product) => {
-          const image = mockProducts.find(
-            (item) => item.id === product.productId
-          )?.url
+          const image = USE_MOCKS
+            ? mockProducts.find((item) => item.id === product.productId)?.url
+            : undefined
 
           return (
             <Link
@@ -152,8 +153,14 @@ export function ProductSearchPage() {
               to={
                 product.productId
                   ? `/products/${product.productId}?saleType=${product.saleType}`
-                  : "#"
+                  : "/search"
               }
+              aria-disabled={!product.productId}
+              onClick={(event) => {
+                if (!product.productId) {
+                  event.preventDefault()
+                }
+              }}
               className="grid grid-cols-[104px_1fr] gap-4 p-4 md:p-5"
             >
               <div className="overflow-hidden rounded-md bg-neutral-100">
@@ -164,7 +171,9 @@ export function ProductSearchPage() {
                     className="aspect-square size-full object-cover"
                   />
                 ) : (
-                  <div className="aspect-square" />
+                  <div className="flex aspect-square items-center justify-center text-neutral-300">
+                    <ImageOff className="size-6" />
+                  </div>
                 )}
               </div>
               <div className="min-w-0">

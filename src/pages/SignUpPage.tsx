@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query"
 import { Link, useNavigate } from "react-router-dom"
 import { ArrowLeft } from "lucide-react"
 import { signUp } from "@/api/authApi"
+import { getApiErrorMessage } from "@/lib/apiClient"
 
 export function SignUpPage() {
   const navigate = useNavigate()
@@ -84,7 +85,7 @@ export function SignUpPage() {
 
         {signUpMutation.isError && (
           <p className="text-sm text-red-600">
-            입력값을 확인한 뒤 다시 시도해 주세요.
+            {getApiErrorMessage(signUpMutation.error)}
           </p>
         )}
 
@@ -119,10 +120,12 @@ function FormField({
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        type={type}
+          type={type}
         className="h-12 w-full rounded-md border border-neutral-300 px-3 text-sm outline-none focus:border-neutral-950"
-        placeholder={placeholder}
-        required
+          placeholder={placeholder}
+          minLength={type === "password" ? 8 : undefined}
+          maxLength={type === "password" ? 64 : undefined}
+          required
       />
     </label>
   )
