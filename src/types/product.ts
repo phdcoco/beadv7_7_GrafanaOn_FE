@@ -28,7 +28,7 @@ export type ProductSummary = {
 export type ProductImage = {
   sortOrder: number
   url: string
-  story: string
+  story: string | null
 }
 
 export type ProductDetail = {

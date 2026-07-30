@@ -10,11 +10,13 @@ import { Link } from "react-router-dom"
 import {
   ArrowLeft,
   ArrowRight,
+  BookOpenText,
   CalendarClock,
   CheckCircle2,
   ImagePlus,
   LoaderCircle,
   Store,
+  Zap,
   X,
 } from "lucide-react"
 import { getSellerAccount } from "@/api/memberApi"
@@ -296,7 +298,9 @@ export function ProductCreatePage() {
           <ArrowLeft className="size-5" />
         </button>
         <h1 className="absolute left-1/2 -translate-x-1/2 text-sm font-black">
-          판매 상품 등록
+          {saleType === "IMMEDIATE"
+            ? "즉시구매 상품 등록"
+            : "오퍼구매 상품 등록"}
         </h1>
       </header>
 
@@ -306,7 +310,7 @@ export function ProductCreatePage() {
       >
         <section className="border-y border-neutral-200 bg-white px-5 py-6 md:border md:px-7">
           <p className="text-xs font-bold text-neutral-400">SALE TYPE</p>
-          <h2 className="mt-1 text-base font-black">판매 방식을 선택해 주세요</h2>
+          <h2 className="mt-1 text-base font-black">어떻게 판매할까요?</h2>
           <div className="mt-4 grid grid-cols-2 gap-2 rounded-md bg-neutral-100 p-1">
             <SaleTypeButton
               active={saleType === "IMMEDIATE"}
@@ -321,15 +325,24 @@ export function ProductCreatePage() {
               onClick={() => setSaleType("OFFER")}
             />
           </div>
+          <SaleTypeIntro saleType={saleType} />
         </section>
 
         <section className="mt-2 border-y border-neutral-200 bg-white px-5 py-6 md:mt-4 md:border md:px-7">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-bold text-neutral-400">IMAGES</p>
-              <h2 className="mt-1 text-base font-black">상품 이미지</h2>
+              <p className="text-xs font-bold text-neutral-400">
+                {saleType === "IMMEDIATE" ? "PRODUCT IMAGES" : "STORY IMAGES"}
+              </p>
+              <h2 className="mt-1 text-base font-black">
+                {saleType === "IMMEDIATE"
+                  ? "판매할 상품을 보여주세요"
+                  : "이야기를 담을 사진을 올려주세요"}
+              </h2>
               <p className="mt-1 text-xs text-neutral-500">
-                첫 번째 사진이 대표 이미지가 됩니다.
+                {saleType === "IMMEDIATE"
+                  ? "첫 번째 사진이 목록의 대표 이미지로 표시됩니다."
+                  : "사진 순서대로 구매자에게 이야기와 함께 공개됩니다."}
               </p>
             </div>
             <span className="text-xs font-bold text-neutral-400">
@@ -351,6 +364,17 @@ export function ProductCreatePage() {
                 {index === 0 && (
                   <span className="absolute left-1.5 top-1.5 rounded bg-brand px-1.5 py-0.5 text-[9px] font-black">
                     대표
+                  </span>
+                )}
+                {saleType === "OFFER" && (
+                  <span
+                    className={`absolute bottom-1.5 left-1.5 rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                      image.story.trim()
+                        ? "bg-neutral-950/80 text-white"
+                        : "bg-white/90 text-neutral-700"
+                    }`}
+                  >
+                    {image.story.trim() ? "이야기 완료" : "이야기 필요"}
                   </span>
                 )}
                 <button
@@ -379,49 +403,19 @@ export function ProductCreatePage() {
               </label>
             )}
           </div>
-
-          {saleType === "OFFER" && images.length > 0 && (
-            <div className="mt-6 space-y-4 border-t border-neutral-100 pt-5">
-              <div>
-                <h3 className="text-sm font-black">사진별 이야기</h3>
-                <p className="mt-1 text-xs text-neutral-500">
-                  구매자는 모든 사진과 이야기를 본 뒤 오퍼를 작성할 수 있어요.
-                </p>
-              </div>
-              {images.map((image, index) => (
-                <label
-                  key={image.id}
-                  className="grid grid-cols-[64px_minmax(0,1fr)] gap-3"
-                >
-                  <img
-                    src={image.previewUrl}
-                    alt=""
-                    className="aspect-square w-full rounded-md object-cover"
-                  />
-                  <span className="block">
-                    <span className="mb-1.5 block text-xs font-bold">
-                      이야기 {index + 1}
-                    </span>
-                    <textarea
-                      value={image.story}
-                      onChange={(event) =>
-                        updateStory(image.id, event.target.value)
-                      }
-                      className="min-h-20 w-full resize-none rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-brand"
-                      placeholder="이 사진에 담긴 이야기를 적어 주세요"
-                      maxLength={1000}
-                      required
-                    />
-                  </span>
-                </label>
-              ))}
-            </div>
-          )}
         </section>
+
+        {saleType === "OFFER" && (
+          <OfferStorySection images={images} onStoryChange={updateStory} />
+        )}
 
         <section className="mt-2 border-y border-neutral-200 bg-white px-5 py-6 md:mt-4 md:border md:px-7">
           <p className="text-xs font-bold text-neutral-400">PRODUCT INFO</p>
-          <h2 className="mt-1 text-base font-black">상품 정보</h2>
+          <h2 className="mt-1 text-base font-black">
+            {saleType === "IMMEDIATE"
+              ? "즉시구매 상품 정보"
+              : "오퍼 상품 기본 정보"}
+          </h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <ProductField
               label="브랜드"
@@ -461,7 +455,9 @@ export function ProductCreatePage() {
               </select>
             </label>
             <label className="block">
-              <span className="mb-2 block text-xs font-bold">판매 가격</span>
+              <span className="mb-2 block text-xs font-bold">
+                {saleType === "IMMEDIATE" ? "즉시구매 가격" : "상품 기준 가격"}
+              </span>
               <span className="relative block">
                 <input
                   value={price}
@@ -501,7 +497,11 @@ export function ProductCreatePage() {
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               className="min-h-28 w-full resize-none rounded-md border border-neutral-300 px-3 py-3 text-sm outline-none focus:border-brand"
-              placeholder="색상, 상태, 구성품 등 상품 정보를 작성해 주세요"
+              placeholder={
+                saleType === "IMMEDIATE"
+                  ? "상품 상태, 구성품, 구매 전 확인할 내용을 작성해 주세요"
+                  : "사진별 이야기 외에 구매자가 알아야 할 상품 정보를 작성해 주세요"
+              }
               maxLength={1000}
             />
             <span className="mt-1 block text-right text-[10px] text-neutral-400">
@@ -547,6 +547,104 @@ export function ProductCreatePage() {
         </div>
       </form>
     </div>
+  )
+}
+
+function SaleTypeIntro({
+  saleType,
+}: {
+  saleType: ProductSaleType
+}) {
+  const immediate = saleType === "IMMEDIATE"
+
+  return (
+    <div className="mt-4 flex items-start gap-3 border-l-2 border-brand bg-[#fff7f2] px-4 py-3">
+      {immediate ? (
+        <Zap className="mt-0.5 size-5 shrink-0 fill-brand text-brand" />
+      ) : (
+        <BookOpenText className="mt-0.5 size-5 shrink-0 text-brand" />
+      )}
+      <div>
+        <p className="text-sm font-black">
+          {immediate ? "가격으로 바로 판매해요" : "상품의 이야기로 오퍼를 받아요"}
+        </p>
+        <p className="mt-1 text-xs leading-5 text-neutral-600">
+          {immediate
+            ? "공개 후 구매자가 표시된 가격으로 바로 결제할 수 있습니다."
+            : "구매자는 모든 사진과 이야기를 확인한 뒤 판매자에게 오퍼를 보냅니다."}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function OfferStorySection({
+  images,
+  onStoryChange,
+}: {
+  images: ImageDraft[]
+  onStoryChange: (imageId: string, story: string) => void
+}) {
+  return (
+    <section className="mt-2 border-y border-neutral-200 bg-white px-5 py-6 md:mt-4 md:border md:px-7">
+      <div className="flex items-start gap-3">
+        <BookOpenText className="mt-0.5 size-5 shrink-0 text-brand" />
+        <div>
+          <p className="text-xs font-bold text-neutral-400">PHOTO STORIES</p>
+          <h2 className="mt-1 text-base font-black">사진마다 이야기를 들려주세요</h2>
+          <p className="mt-1 text-xs leading-5 text-neutral-500">
+            구매자는 아래 순서대로 모든 이야기를 확인한 후 오퍼를 작성합니다.
+          </p>
+        </div>
+      </div>
+
+      {images.length === 0 ? (
+        <div className="mt-5 border border-dashed border-neutral-300 bg-neutral-50 px-4 py-8 text-center">
+          <ImagePlus className="mx-auto size-6 text-neutral-400" />
+          <p className="mt-2 text-xs font-bold text-neutral-500">
+            먼저 위에서 사진을 추가해 주세요.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-5 space-y-5">
+          {images.map((image, index) => (
+            <label
+              key={image.id}
+              className="grid grid-cols-[76px_minmax(0,1fr)] gap-3 border-b border-neutral-100 pb-5 last:border-0 last:pb-0"
+            >
+              <span className="block">
+                <img
+                  src={image.previewUrl}
+                  alt={`이야기 ${index + 1} 상품 이미지`}
+                  className="aspect-square w-full rounded-md object-cover"
+                />
+                <span className="mt-1 block text-center text-[10px] font-bold text-neutral-400">
+                  {index + 1}/{images.length}
+                </span>
+              </span>
+              <span className="block">
+                <span className="mb-1.5 flex items-center justify-between text-xs font-bold">
+                  이야기 {index + 1}
+                  <span className="font-normal text-neutral-400">
+                    {image.story.length}/1000
+                  </span>
+                </span>
+                <textarea
+                  value={image.story}
+                  onChange={(event) =>
+                    onStoryChange(image.id, event.target.value)
+                  }
+                  className="min-h-24 w-full resize-none rounded-md border border-neutral-300 px-3 py-2 text-sm leading-6 outline-none focus:border-brand"
+                  placeholder="사진에 담긴 기억과 상품의 이야기를 적어 주세요"
+                  maxLength={1000}
+                  required
+                />
+              </span>
+            </label>
+          ))}
+        </div>
+      )}
+    </section>
   )
 }
 

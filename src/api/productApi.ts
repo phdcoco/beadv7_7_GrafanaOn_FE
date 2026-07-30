@@ -89,11 +89,12 @@ export async function getProductDetail(
   const { data } = await apiClient.get<ApiResponse<ProductDetail>>(
     `/api/products/${productId}`
   )
+  const product = unwrapData(data)
 
   return {
-    ...unwrapData(data),
+    ...product,
     productId,
-    saleType,
+    saleType: product.saleType ?? saleType,
   }
 }
 
