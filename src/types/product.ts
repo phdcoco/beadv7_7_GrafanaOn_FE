@@ -72,3 +72,43 @@ export type GetProductsParams = {
   status?: ProductStatus
   createdAt?: string
 }
+
+export type UploadFileType = "JPG" | "JPEG" | "PNG" | "WEBP"
+
+export type ProductImageContent = {
+  sortOrder: number
+  url: string
+  story: string | null
+}
+
+export type CreateProductRequest = {
+  saleType: ProductSaleType
+  productImageContents: ProductImageContent[]
+  brand: string
+  name: string
+  price: number
+  modelNumber: string
+  category: ProductCategory
+  releaseDate: string | null
+  description: string | null
+}
+
+export type ProductImageUpload = {
+  sortOrder: number
+  file: File
+}
+
+export type UploadedProductImage = {
+  sortOrder: number
+  url: string
+}
+
+export type SellerProduct = {
+  id: number
+  status: ProductStatus
+  url: string
+  name: string
+  brand: string
+  price: number
+  viewCount: number
+}

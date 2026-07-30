@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/apiClient"
+import { apiClient, ApiClientError } from "@/lib/apiClient"
 import { unwrapData } from "@/lib/apiResponse"
 import { USE_MOCKS } from "@/lib/runtime"
 import type { ApiResponse } from "@/types/api"
@@ -8,6 +8,8 @@ import type {
   SellerAccountRequest,
   UpdateMemberProfileRequest,
 } from "@/types/member"
+
+const MOCK_SELLER_ACCOUNT_KEY = "dear-mock-seller-account"
 
 export async function getMemberProfile(memberId?: number) {
   if (USE_MOCKS) {
@@ -45,31 +47,77 @@ export async function updateMemberProfile(request: UpdateMemberProfileRequest) {
   return unwrapData(data)
 }
 
-export async function getSellerAccount() {
+export async function getSellerAccount(): Promise<SellerAccount | null> {
   if (USE_MOCKS) {
-    return { bank: "디어은행", account: "123-****-7890" }
+    return readMockSellerAccount()
   }
 
-  const { data } = await apiClient.get<ApiResponse<SellerAccount>>(
-    "/api/members/me/seller"
-  )
-  return unwrapData(data)
+  try {
+    const { data } = await apiClient.get<ApiResponse<SellerAccount>>(
+      "/api/members/me/seller"
+    )
+    return unwrapData(data)
+  } catch (error) {
+    if (error instanceof ApiClientError && error.code === "MB-005") {
+      return null
+    }
+
+    throw error
+  }
 }
 
 export async function registerSeller(request: SellerAccountRequest) {
-  if (!USE_MOCKS) {
-    await apiClient.post<ApiResponse<void>>("/api/members/me/seller", request)
+  if (USE_MOCKS) {
+    writeMockSellerAccount({
+      bank: request.bank,
+      account: maskAccount(request.account),
+    })
+    return
   }
+
+  await apiClient.post<ApiResponse<void>>("/api/members/me/seller", request)
 }
 
 export async function updateSellerAccount(request: SellerAccountRequest) {
-  if (!USE_MOCKS) {
-    await apiClient.patch<ApiResponse<void>>("/api/members/me/seller", request)
+  if (USE_MOCKS) {
+    writeMockSellerAccount({
+      bank: request.bank,
+      account: maskAccount(request.account),
+    })
+    return
   }
+
+  await apiClient.patch<ApiResponse<void>>("/api/members/me/seller", request)
 }
 
 export async function unregisterSeller() {
-  if (!USE_MOCKS) {
-    await apiClient.delete<ApiResponse<void>>("/api/members/me/seller")
+  if (USE_MOCKS) {
+    localStorage.removeItem(MOCK_SELLER_ACCOUNT_KEY)
+    return
   }
+
+  await apiClient.delete<ApiResponse<void>>("/api/members/me/seller")
+}
+
+function readMockSellerAccount(): SellerAccount | null {
+  try {
+    const storedAccount = localStorage.getItem(MOCK_SELLER_ACCOUNT_KEY)
+    return storedAccount ? JSON.parse(storedAccount) : null
+  } catch {
+    return null
+  }
+}
+
+function writeMockSellerAccount(account: SellerAccount) {
+  localStorage.setItem(MOCK_SELLER_ACCOUNT_KEY, JSON.stringify(account))
+}
+
+function maskAccount(account: string) {
+  const digits = account.replace(/\D/g, "")
+
+  if (digits.length <= 4) {
+    return "*".repeat(digits.length)
+  }
+
+  return `${digits.slice(0, 3)}-${"*".repeat(Math.max(4, digits.length - 6))}-${digits.slice(-3)}`
 }

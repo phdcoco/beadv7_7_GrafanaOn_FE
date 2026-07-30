@@ -10,6 +10,7 @@ import {
   WalletCards,
 } from "lucide-react"
 import { logout, withdraw } from "@/api/authApi"
+import { SellerSection } from "@/components/profile/SellerSection"
 import { getMemberProfile, updateMemberProfile } from "@/api/memberApi"
 import { getMyPurchases } from "@/api/purchaseApi"
 import { getScraps } from "@/api/scrapApi"
@@ -257,6 +258,8 @@ export function ProfilePage() {
           />
         </div>
       </section>
+
+      <SellerSection />
 
       <section className="border-b border-neutral-100 py-6">
         <div className="mb-4 flex items-center justify-between px-5 md:px-8">

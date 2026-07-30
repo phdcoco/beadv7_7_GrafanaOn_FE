@@ -7,15 +7,47 @@ import {
 } from "@/data/mockProducts"
 import type { ApiResponse } from "@/types/api"
 import type {
+  CreateProductRequest,
   GetProductsParams,
   ProductDetail,
+  ProductImageUpload,
   ProductSaleType,
+  SellerProduct,
   ProductSummary,
+  UploadedProductImage,
+  UploadFileType,
 } from "@/types/product"
+
+type PresignedUrlsResponse = {
+  presignedUrls: Array<{
+    sortOrder: number
+    presignedUrl: string
+  }>
+}
+
+type MockSellerProduct = SellerProduct & {
+  detail: ProductDetail
+  saleType: ProductSaleType
+}
+
+const mockSellerProducts: MockSellerProduct[] = []
 
 export async function getProducts(params?: GetProductsParams) {
   if (USE_MOCKS) {
-    return mockProducts.filter((product) => {
+    const createdProducts: ProductSummary[] = mockSellerProducts.map(
+      (product) => ({
+        id: product.id,
+        saleType: product.saleType,
+        status: product.status,
+        url: product.url,
+        name: product.name,
+        brand: product.brand,
+        price: product.price,
+        viewCount: product.viewCount,
+      })
+    )
+
+    return [...mockProducts, ...createdProducts].filter((product) => {
       const matchesSaleType =
         !params?.saleType || product.saleType === params.saleType
       const matchesStatus = !params?.status || product.status === params.status
@@ -37,6 +69,14 @@ export async function getProductDetail(
   saleType?: ProductSaleType
 ) {
   if (USE_MOCKS) {
+    const createdProduct = mockSellerProducts.find(
+      (product) => product.id === productId
+    )
+
+    if (createdProduct) {
+      return createdProduct.detail
+    }
+
     const product = createMockProductDetail(productId)
 
     if (!product) {
@@ -55,4 +95,136 @@ export async function getProductDetail(
     productId,
     saleType,
   }
+}
+
+export async function getMySellerProducts(): Promise<SellerProduct[]> {
+  if (USE_MOCKS) {
+    return mockSellerProducts
+  }
+
+  const { data } = await apiClient.get<ApiResponse<SellerProduct[]>>(
+    "/api/products/me"
+  )
+  return unwrapData(data)
+}
+
+export async function uploadProductImages(
+  images: ProductImageUpload[]
+): Promise<UploadedProductImage[]> {
+  if (USE_MOCKS) {
+    return images.map(({ sortOrder, file }) => ({
+      sortOrder,
+      url: URL.createObjectURL(file),
+    }))
+  }
+
+  const files = images.map(({ sortOrder, file }) => ({
+    sortOrder,
+    uploadFileType: getUploadFileType(file),
+  }))
+  const { data } = await apiClient.post<ApiResponse<PresignedUrlsResponse>>(
+    "/api/products/images/presigned-urls",
+    { files }
+  )
+  const { presignedUrls } = unwrapData(data)
+
+  return Promise.all(
+    images.map(async ({ sortOrder, file }) => {
+      const uploadTarget = presignedUrls.find(
+        (item) => item.sortOrder === sortOrder
+      )
+
+      if (!uploadTarget) {
+        throw new Error(`${sortOrder}번 이미지 업로드 주소가 없습니다.`)
+      }
+
+      const response = await fetch(uploadTarget.presignedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": getUploadContentType(file),
+        },
+        body: file,
+      })
+
+      if (!response.ok) {
+        throw new Error(`${sortOrder}번 이미지를 업로드하지 못했습니다.`)
+      }
+
+      return {
+        sortOrder,
+        url: uploadTarget.presignedUrl.split("?")[0],
+      }
+    })
+  )
+}
+
+export async function createProduct(request: CreateProductRequest) {
+  if (USE_MOCKS) {
+    const id = Date.now()
+    const insertedAt = new Date().toISOString()
+    const firstImage = request.productImageContents[0]
+    const detail: ProductDetail = {
+      productId: id,
+      saleType: request.saleType,
+      sellerId: 1,
+      images: request.productImageContents.map((image) => ({
+        sortOrder: image.sortOrder,
+        url: image.url,
+        story: image.story ?? "",
+      })),
+      name: request.name,
+      brand: request.brand,
+      price: request.price,
+      modelNumber: request.modelNumber,
+      category: request.category,
+      releaseDate: request.releaseDate,
+      viewCount: 0,
+      description: request.description,
+      insertedAt,
+    }
+
+    mockSellerProducts.unshift({
+      id,
+      status: "PREPARING",
+      url: firstImage.url,
+      name: request.name,
+      brand: request.brand,
+      price: request.price,
+      viewCount: 0,
+      saleType: request.saleType,
+      detail,
+    })
+    return
+  }
+
+  await apiClient.post<ApiResponse<void>>("/api/products", request)
+}
+
+function getUploadFileType(file: File): UploadFileType {
+  const extension = file.name.split(".").pop()?.toUpperCase()
+
+  if (
+    extension === "JPG" ||
+    extension === "JPEG" ||
+    extension === "PNG" ||
+    extension === "WEBP"
+  ) {
+    return extension
+  }
+
+  throw new Error("JPG, PNG, WEBP 형식의 이미지만 등록할 수 있습니다.")
+}
+
+function getUploadContentType(file: File) {
+  const fileType = getUploadFileType(file)
+
+  if (fileType === "PNG") {
+    return "image/png"
+  }
+
+  if (fileType === "WEBP") {
+    return "image/webp"
+  }
+
+  return "image/jpeg"
 }

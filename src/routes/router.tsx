@@ -11,6 +11,7 @@ import { PurchasePaymentResultPage } from "@/pages/PurchasePaymentResultPage"
 import { ProductSearchPage } from "@/pages/ProductSearchPage"
 import { ProfilePage } from "@/pages/ProfilePage"
 import { SignUpPage } from "@/pages/SignUpPage"
+import { SellerRegistrationPage } from "@/pages/SellerRegistrationPage"
 
 export const router = createBrowserRouter([
   {
@@ -51,6 +52,19 @@ export const router = createBrowserRouter([
       {
         path: "/profile",
         element: <ProfilePage />,
+      },
+      {
+        path: "/seller/register",
+        element: <SellerRegistrationPage />,
+      },
+      {
+        path: "/sell/products/new",
+        lazy: async () => {
+          const { ProductCreatePage } = await import(
+            "@/pages/ProductCreatePage"
+          )
+          return { Component: ProductCreatePage }
+        },
       },
       {
         path: "/login",
