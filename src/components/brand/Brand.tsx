@@ -36,7 +36,7 @@ function PixelDeer({ className }: { className?: string }) {
 export function SplashLogo() {
   return (
     <div className="splash-logo" role="img" aria-label="D:EAR 앱 로고">
-      <img src="/dear.png" alt="" />
+      <img src="/dear-splash.png" alt="" />
     </div>
   )
 }

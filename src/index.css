@@ -52,19 +52,13 @@ img {
 }
 
 .splash-logo {
-  width: 230px;
-  height: 160px;
-  overflow: hidden;
-  position: relative;
+  width: min(86vw, 360px);
 }
 
 .splash-logo img {
-  position: absolute;
-  width: 595px;
-  max-width: none;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 @keyframes splashOut {
