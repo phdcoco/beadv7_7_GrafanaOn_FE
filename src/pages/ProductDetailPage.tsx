@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import {
   ArrowLeft,
   ArrowRight,
+  CircleAlert,
   Bookmark,
   CheckCircle2,
   ChevronLeft,
@@ -12,8 +13,10 @@ import {
   LoaderCircle,
   Images,
   Share2,
+  ShoppingCart,
   X,
 } from "lucide-react"
+import { addCartItem } from "@/api/cartApi"
 import { createOffer, createOfferSnapshot } from "@/api/offerApi"
 import { getMemberProfile } from "@/api/memberApi"
 import { getProductDetail } from "@/api/productApi"
@@ -51,6 +54,7 @@ export function ProductDetailPage() {
   const [offerTitle, setOfferTitle] = useState("")
   const [offerStory, setOfferStory] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
   const sliderRef = useRef<HTMLDivElement>(null)
 
   const productQuery = useQuery({
@@ -114,6 +118,19 @@ export function ProductDetailPage() {
     onSuccess: (purchase) => {
       setActionMode(null)
       setSuccessMessage(`주문 ${purchase.number}이 생성되었습니다.`)
+    },
+  })
+
+  const cartMutation = useMutation({
+    mutationFn: () => addCartItem(parsedProductId),
+    onSuccess: () => {
+      setErrorMessage("")
+      setSuccessMessage("장바구니에 담았습니다.")
+      void queryClient.invalidateQueries({ queryKey: ["cart", "me"] })
+    },
+    onError: (error) => {
+      setSuccessMessage("")
+      setErrorMessage(getApiErrorMessage(error))
     },
   })
 
@@ -194,6 +211,16 @@ export function ProductDetailPage() {
     if (requireLogin()) {
       scrapMutation.mutate()
     }
+  }
+
+  function handleAddToCart() {
+    if (!requireLogin()) {
+      return
+    }
+
+    setSuccessMessage("")
+    setErrorMessage("")
+    cartMutation.mutate()
   }
 
   async function handleShare() {
@@ -404,13 +431,28 @@ export function ProductDetailPage() {
       <div className="sticky bottom-0 z-30 border-t border-neutral-200 bg-white/97 p-3 backdrop-blur">
         <div className="mx-auto max-w-[760px]">
           {saleType === "IMMEDIATE" && (
-            <button
-              type="button"
-              className="h-12 w-full rounded-md bg-neutral-950 text-sm font-bold text-white"
-              onClick={() => openAction("PURCHASE")}
-            >
-              즉시 구매하기
-            </button>
+            <div className="grid grid-cols-[minmax(112px,0.8fr)_minmax(0,1.2fr)] gap-2">
+              <button
+                type="button"
+                className="flex h-12 items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white text-sm font-bold text-neutral-950 hover:border-neutral-950"
+                disabled={cartMutation.isPending}
+                onClick={handleAddToCart}
+              >
+                {cartMutation.isPending ? (
+                  <LoaderCircle className="size-4 animate-spin" />
+                ) : (
+                  <ShoppingCart className="size-4" />
+                )}
+                장바구니
+              </button>
+              <button
+                type="button"
+                className="h-12 rounded-md bg-neutral-950 text-sm font-bold text-white"
+                onClick={() => openAction("PURCHASE")}
+              >
+                즉시 구매하기
+              </button>
+            </div>
           )}
 
           {isOffer && isSeller && (
@@ -457,6 +499,20 @@ export function ProductDetailPage() {
             type="button"
             aria-label="알림 닫기"
             onClick={() => setSuccessMessage("")}
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="fixed inset-x-4 bottom-20 z-40 mx-auto flex max-w-md items-center gap-2 rounded-md bg-red-700 px-4 py-3 text-sm font-semibold text-white shadow-lg">
+          <CircleAlert className="size-4 shrink-0" />
+          <span className="flex-1">{errorMessage}</span>
+          <button
+            type="button"
+            aria-label="오류 알림 닫기"
+            onClick={() => setErrorMessage("")}
           >
             <X className="size-4" />
           </button>

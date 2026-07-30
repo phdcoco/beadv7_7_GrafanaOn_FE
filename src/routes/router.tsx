@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router-dom"
 import { AppLayout } from "@/components/layout/AppLayout"
+import { CartPage } from "@/pages/CartPage"
 import { LoginPage } from "@/pages/LoginPage"
 import { ImmediatePurchasePage } from "@/pages/ImmediatePurchasePage"
 import { OfferPurchasePage } from "@/pages/OfferPurchasePage"
@@ -20,6 +21,10 @@ export const router = createBrowserRouter([
       {
         path: "/search",
         element: <ProductSearchPage />,
+      },
+      {
+        path: "/cart",
+        element: <CartPage />,
       },
       {
         path: "/immediate",

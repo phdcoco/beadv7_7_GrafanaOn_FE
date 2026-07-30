@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom"
 import {
-  Bell,
   HandCoins,
   Home,
   Search,
   ShoppingBag,
+  ShoppingCart,
   UserRound,
   Zap,
 } from "lucide-react"
+import { getCart } from "@/api/cartApi"
 import { BrandWordmark, SplashLogo } from "@/components/brand/Brand"
+import { isAuthenticated } from "@/lib/authStorage"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -83,13 +86,7 @@ export function AppLayout() {
                 >
                   <Search className="size-6 stroke-[1.8] transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-105" />
                 </Link>
-                <button
-                  type="button"
-                  className="group flex size-10 items-center justify-center rounded-full transition-colors hover:bg-neutral-100"
-                  aria-label="알림"
-                >
-                  <Bell className="size-6 stroke-[1.8] transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:rotate-6" />
-                </button>
+                <CartLink />
               </div>
             </div>
           </header>
@@ -148,5 +145,30 @@ export function AppLayout() {
         </nav>
       )}
     </div>
+  )
+}
+
+function CartLink() {
+  const loggedIn = isAuthenticated()
+  const cartQuery = useQuery({
+    queryKey: ["cart", "me"],
+    queryFn: getCart,
+    enabled: loggedIn,
+  })
+  const itemCount = cartQuery.data?.items.length ?? 0
+
+  return (
+    <Link
+      to="/cart"
+      className="group relative flex size-10 items-center justify-center rounded-full transition-colors hover:bg-neutral-100"
+      aria-label={`장바구니${itemCount > 0 ? `, 상품 ${itemCount}개` : ""}`}
+    >
+      <ShoppingCart className="size-6 stroke-[1.8] transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-105" />
+      {itemCount > 0 && (
+        <span className="absolute right-0 top-0 flex min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-black leading-4 text-white">
+          {itemCount > 99 ? "99+" : itemCount}
+        </span>
+      )}
+    </Link>
   )
 }
