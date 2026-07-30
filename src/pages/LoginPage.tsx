@@ -59,7 +59,7 @@ export function LoginPage() {
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   type="email"
-                  className="h-12 w-full rounded-md border border-neutral-300 pl-10 pr-3 text-sm outline-none focus:border-brand-500"
+                  className="h-12 w-full rounded-md border border-neutral-300 pl-10 pr-3 text-sm outline-none focus:border-brand"
                   placeholder="email@example.com"
                   required
                 />
@@ -73,7 +73,7 @@ export function LoginPage() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   type="password"
-                  className="h-12 w-full rounded-md border border-neutral-300 pl-10 pr-3 text-sm outline-none focus:border-brand-500"
+                  className="h-12 w-full rounded-md border border-neutral-300 pl-10 pr-3 text-sm outline-none focus:border-brand"
                   placeholder="비밀번호"
                   required
                 />
@@ -88,7 +88,7 @@ export function LoginPage() {
 
             <button
               type="submit"
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-brand-500 text-sm font-bold text-neutral-950 hover:bg-brand-600"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-brand text-sm font-bold text-neutral-950 hover:brightness-95"
               disabled={loginMutation.isPending}
             >
               {loginMutation.isPending ? "로그인 중..." : "로그인"}
@@ -98,7 +98,10 @@ export function LoginPage() {
 
           <p className="mt-6 text-center text-sm text-neutral-500">
             아직 회원이 아닌가요?{" "}
-            <Link to="/signup" className="font-bold text-brand-700 underline">
+            <Link
+              to="/signup"
+              className="font-bold text-neutral-950 underline decoration-brand decoration-2 underline-offset-4"
+            >
               회원가입
             </Link>
           </p>

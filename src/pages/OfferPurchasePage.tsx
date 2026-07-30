@@ -43,7 +43,7 @@ export function OfferPurchasePage() {
               type="button"
               className={`flex h-10 shrink-0 items-center gap-2 rounded-md border px-3 text-xs font-semibold ${
                 selectedFilter === filter.label
-                  ? "border-brand-500 bg-brand-500 text-neutral-950"
+                  ? "border-brand bg-brand text-neutral-950"
                   : "border-neutral-200 bg-white text-neutral-600"
               }`}
               onClick={() => setSelectedFilter(filter.label)}

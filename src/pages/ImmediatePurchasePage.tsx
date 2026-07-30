@@ -37,7 +37,7 @@ export function ImmediatePurchasePage() {
               type="button"
               className={`h-10 shrink-0 rounded-md border px-3 text-sm font-semibold ${
                 primaryFilter === filter
-                  ? "border-brand-500 bg-brand-500 text-neutral-950"
+                  ? "border-brand bg-brand text-neutral-950"
                   : "border-neutral-200 bg-white text-neutral-600"
               }`}
               onClick={() => setPrimaryFilter(filter)}
@@ -54,7 +54,7 @@ export function ImmediatePurchasePage() {
               type="button"
               className={`shrink-0 text-xs ${
                 category === item
-                  ? "font-extrabold text-brand-700"
+                  ? "font-extrabold text-neutral-950 underline decoration-brand decoration-2 underline-offset-4"
                   : "font-medium text-neutral-500"
               }`}
               onClick={() => setCategory(item)}

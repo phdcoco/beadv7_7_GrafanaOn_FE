@@ -5,11 +5,11 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
-  "theme_color": "#ffffff",
+  "theme_color": "#FF6600",
   "icons": [
     {
       "src": "/dear.png",
-      "sizes": "952x952",
+      "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"
     }

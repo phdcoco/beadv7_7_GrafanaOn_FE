@@ -286,7 +286,7 @@ export function ProductDetailPage() {
                   />
                   {isOffer && (
                     <div className="min-h-36 border-t border-neutral-200 bg-white px-5 py-5 md:px-8">
-                      <p className="text-xs font-bold text-brand-700">
+                      <p className="border-l-2 border-brand pl-2 text-xs font-bold text-neutral-900">
                         이야기 {index + 1}
                       </p>
                       <p className="mt-2 text-sm leading-6 text-neutral-700">
@@ -357,7 +357,7 @@ export function ProductDetailPage() {
             <span
               className={`mt-4 inline-flex rounded px-2 py-1 text-xs font-bold ${
                 isOffer
-                  ? "bg-brand-100 text-brand-900"
+                  ? "bg-brand/15 text-neutral-950"
                   : "bg-neutral-100 text-neutral-700"
               }`}
             >
@@ -389,7 +389,7 @@ export function ProductDetailPage() {
           <div className="px-5 py-5 md:px-7">
             <p className="text-sm font-extrabold">판매자</p>
             <div className="mt-3 flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-neutral-950">
+              <span className="flex size-10 items-center justify-center rounded-full bg-brand text-sm font-bold text-neutral-950">
                 D
               </span>
               <div>
@@ -421,7 +421,7 @@ export function ProductDetailPage() {
 
           {isOffer && !isSeller && !viewedAllOfferImages && (
             <div className="flex min-h-12 items-center gap-3 px-1">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-brand-50 text-brand-700">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-brand/10 text-neutral-950">
                 <Images className="size-4" />
               </span>
               <div className="min-w-0 flex-1">
@@ -440,7 +440,7 @@ export function ProductDetailPage() {
           {isOffer && !isSeller && viewedAllOfferImages && (
             <button
               type="button"
-              className="h-12 w-full rounded-md bg-brand-500 text-sm font-bold text-neutral-950 hover:bg-brand-600"
+              className="h-12 w-full rounded-md bg-brand text-sm font-bold text-neutral-950 hover:brightness-95"
               onClick={() => openAction("OFFER")}
             >
               오퍼 작성하기
@@ -451,7 +451,7 @@ export function ProductDetailPage() {
 
       {successMessage && (
         <div className="fixed inset-x-4 bottom-20 z-40 mx-auto flex max-w-md items-center gap-2 rounded-md bg-neutral-950 px-4 py-3 text-sm font-semibold text-white shadow-lg">
-          <CheckCircle2 className="size-4 shrink-0 text-brand-300" />
+          <CheckCircle2 className="size-4 shrink-0 text-brand" />
           <span className="flex-1">{successMessage}</span>
           <button
             type="button"
@@ -506,7 +506,7 @@ export function ProductDetailPage() {
                     <textarea
                       value={offerStory}
                       onChange={(event) => setOfferStory(event.target.value)}
-                      className="min-h-28 w-full resize-none rounded-md border border-neutral-300 px-3 py-3 text-sm outline-none focus:border-brand-500"
+                      className="min-h-28 w-full resize-none rounded-md border border-neutral-300 px-3 py-3 text-sm outline-none focus:border-brand"
                       placeholder="판매자에게 전할 이야기를 적어 주세요"
                       required
                     />
@@ -536,7 +536,7 @@ export function ProductDetailPage() {
               <button
                 type="submit"
                 className={`flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-bold text-white ${
-                  "bg-brand-500 text-neutral-950 hover:bg-brand-600"
+                  "bg-brand text-neutral-950 hover:brightness-95"
                 }`}
                 disabled={actionPending}
               >
@@ -574,7 +574,7 @@ function FormField({
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-12 w-full rounded-md border border-neutral-300 px-3 text-sm outline-none focus:border-brand-500"
+        className="h-12 w-full rounded-md border border-neutral-300 px-3 text-sm outline-none focus:border-brand"
         placeholder={placeholder}
         maxLength={maxLength}
         required

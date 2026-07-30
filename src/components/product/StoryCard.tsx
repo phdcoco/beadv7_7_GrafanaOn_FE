@@ -39,7 +39,7 @@ export function StoryCard({
       />
       <div className={horizontal ? "flex min-w-0 flex-col p-3" : "p-4"}>
         <div className="flex items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-full bg-brand-500 text-xs font-bold text-neutral-950">
+          <span className="flex size-7 items-center justify-center rounded-full bg-brand text-xs font-bold text-neutral-950">
             {writer.slice(0, 1)}
           </span>
           <span className="text-xs font-semibold">{writer}님의 이야기</span>
@@ -53,7 +53,9 @@ export function StoryCard({
             <BookOpenText className="size-3.5" />
             상품 이야기
           </span>
-          <span className="font-semibold text-brand-700">이야기 읽기</span>
+          <span className="font-semibold text-neutral-950 underline decoration-brand decoration-2 underline-offset-4">
+            이야기 읽기
+          </span>
         </div>
       </div>
     </Link>

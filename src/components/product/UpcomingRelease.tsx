@@ -48,7 +48,7 @@ export function UpcomingRelease() {
       <section className="bg-neutral-950 px-5 py-7 text-white md:px-8 md:py-9">
         <div className="flex items-start justify-between gap-5">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-brand-300">
+            <div className="flex items-center gap-2 text-xs font-bold text-brand">
               <CalendarClock className="size-4" />
               매일 오후 8시 공개
             </div>
@@ -63,7 +63,7 @@ export function UpcomingRelease() {
               한꺼번에 열립니다.
             </p>
           </div>
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-brand-500/20 text-brand-300">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-brand/20 text-brand">
             <LockKeyhole className="size-6" />
           </span>
         </div>
