@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { BookOpenText, Flame, Sparkles } from "lucide-react"
+import { Flame, Sparkles } from "lucide-react"
 import { getProducts } from "@/api/productApi"
 import { ProductCard } from "@/components/product/ProductCard"
 import { StoryCard } from "@/components/product/StoryCard"
@@ -10,7 +10,6 @@ import { USE_MOCKS } from "@/lib/runtime"
 const filters = [
   { label: "새로운 이야기", icon: Sparkles },
   { label: "많이 보는 이야기", icon: Flame },
-  { label: "오퍼가 열린 이야기", icon: BookOpenText },
 ]
 
 export function OfferPurchasePage() {

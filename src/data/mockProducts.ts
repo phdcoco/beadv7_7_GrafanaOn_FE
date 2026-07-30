@@ -94,6 +94,36 @@ export const mockProducts: ProductSummary[] = [
     price: 135000,
     viewCount: 955,
   },
+  {
+    id: 10,
+    saleType: "OFFER",
+    status: "PREPARING",
+    url: "https://images.unsplash.com/photo-1543508282-6319a3e2621f?auto=format&fit=crop&w=900&q=85",
+    name: "첫 출근길을 함께한 검정 구두",
+    brand: "Dr. Martens",
+    price: 126000,
+    viewCount: 0,
+  },
+  {
+    id: 11,
+    saleType: "IMMEDIATE",
+    status: "PREPARING",
+    url: "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=900&q=85",
+    name: "프라임 러너 오프화이트",
+    brand: "New Balance",
+    price: 149000,
+    viewCount: 0,
+  },
+  {
+    id: 12,
+    saleType: "OFFER",
+    status: "PREPARING",
+    url: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=900&q=85",
+    name: "여름 여행에서 만난 러닝화",
+    brand: "Nike",
+    price: 98000,
+    viewCount: 0,
+  },
 ]
 
 const stories: Record<number, string[]> = {

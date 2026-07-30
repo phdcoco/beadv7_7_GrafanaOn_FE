@@ -3,12 +3,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import {
   ArrowLeft,
+  ArrowRight,
   Bookmark,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Eye,
   LoaderCircle,
+  Images,
   Share2,
   X,
 } from "lucide-react"
@@ -42,6 +44,7 @@ export function ProductDetailPage() {
   const querySaleType = searchParams.get("saleType") as ProductSaleType | null
   const loggedIn = isAuthenticated()
   const [activeIndex, setActiveIndex] = useState(0)
+  const [furthestViewedIndex, setFurthestViewedIndex] = useState(0)
   const [scrapped, setScrapped] = useState(false)
   const [actionMode, setActionMode] = useState<ActionMode>(null)
   const [delivery, setDelivery] = useState("")
@@ -60,7 +63,7 @@ export function ProductDetailPage() {
   const profileQuery = useQuery({
     queryKey: ["member-profile", "me"],
     queryFn: () => getMemberProfile(),
-    enabled: loggedIn && actionMode !== null,
+    enabled: loggedIn,
   })
 
   const scrapsQuery = useQuery({
@@ -68,6 +71,11 @@ export function ProductDetailPage() {
     queryFn: () => getScraps(0, 100),
     enabled: loggedIn,
   })
+
+  useEffect(() => {
+    setActiveIndex(0)
+    setFurthestViewedIndex(0)
+  }, [parsedProductId])
 
   useEffect(() => {
     if (!delivery && profileQuery.data?.defaultShippingAddress) {
@@ -151,6 +159,10 @@ export function ProductDetailPage() {
   const product = productQuery.data
   const saleType = product.saleType ?? querySaleType
   const isOffer = saleType === "OFFER"
+  const isSeller = profileQuery.data?.id === product.sellerId
+  const viewedAllOfferImages =
+    product.images.length > 0 &&
+    furthestViewedIndex >= product.images.length - 1
 
   function requireLogin() {
     if (loggedIn) {
@@ -166,10 +178,12 @@ export function ProductDetailPage() {
     const target = event.currentTarget
     const nextIndex = Math.round(target.scrollLeft / target.clientWidth)
     setActiveIndex(nextIndex)
+    setFurthestViewedIndex((current) => Math.max(current, nextIndex))
   }
 
   function moveSlide(nextIndex: number) {
     const safeIndex = Math.max(0, Math.min(nextIndex, product.images.length - 1))
+    setFurthestViewedIndex((current) => Math.max(current, safeIndex))
     sliderRef.current?.scrollTo({
       left: sliderRef.current.clientWidth * safeIndex,
       behavior: "smooth",
@@ -389,15 +403,47 @@ export function ProductDetailPage() {
 
       <div className="sticky bottom-0 z-30 border-t border-neutral-200 bg-white/97 p-3 backdrop-blur">
         <div className="mx-auto max-w-[760px]">
-          {saleType && (
+          {saleType === "IMMEDIATE" && (
             <button
               type="button"
-              className={`h-12 w-full rounded-md text-sm font-bold text-white ${
-                isOffer ? "bg-[#5b72f2]" : "bg-neutral-950"
-              }`}
-              onClick={() => openAction(isOffer ? "OFFER" : "PURCHASE")}
+              className="h-12 w-full rounded-md bg-neutral-950 text-sm font-bold text-white"
+              onClick={() => openAction("PURCHASE")}
             >
-              {isOffer ? "오퍼 작성하기" : "즉시 구매하기"}
+              즉시 구매하기
+            </button>
+          )}
+
+          {isOffer && isSeller && (
+            <p className="py-2 text-center text-sm font-semibold text-neutral-600">
+              내가 등록한 상품에는 오퍼를 작성할 수 없어요.
+            </p>
+          )}
+
+          {isOffer && !isSeller && !viewedAllOfferImages && (
+            <div className="flex min-h-12 items-center gap-3 px-1">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-[#eef0ff] text-[#5b72f2]">
+                <Images className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-neutral-900">
+                  사진과 이야기를 끝까지 확인해 주세요
+                </p>
+                <p className="mt-0.5 text-[11px] text-neutral-500">
+                  모두 본 뒤 오퍼를 작성할 수 있어요 · {activeIndex + 1}/
+                  {product.images.length}
+                </p>
+              </div>
+              <ArrowRight className="size-4 shrink-0 text-neutral-400" />
+            </div>
+          )}
+
+          {isOffer && !isSeller && viewedAllOfferImages && (
+            <button
+              type="button"
+              className="h-12 w-full rounded-md bg-[#5b72f2] text-sm font-bold text-white"
+              onClick={() => openAction("OFFER")}
+            >
+              오퍼 작성하기
             </button>
           )}
         </div>

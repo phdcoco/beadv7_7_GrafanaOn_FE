@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { ArrowRight } from "lucide-react"
 import { getProducts } from "@/api/productApi"
 import { ProductCard } from "@/components/product/ProductCard"
@@ -12,14 +12,15 @@ import { USE_MOCKS } from "@/lib/runtime"
 type HomeTab = "ALL" | "IMMEDIATE" | "OFFER" | "UPCOMING"
 
 const tabs: { value: HomeTab; label: string }[] = [
+  { value: "UPCOMING", label: "공개 예정" },
   { value: "ALL", label: "전체" },
   { value: "IMMEDIATE", label: "즉시구매" },
   { value: "OFFER", label: "오퍼구매" },
-  { value: "UPCOMING", label: "공개 예정" },
 ]
 
 export function ProductListPage() {
-  const [tab, setTab] = useState<HomeTab>("ALL")
+  const navigate = useNavigate()
+  const [tab, setTab] = useState<HomeTab>("UPCOMING")
 
   const immediateProducts = useQuery({
     queryKey: ["products", "IMMEDIATE", "home"],
@@ -36,6 +37,20 @@ export function ProductListPage() {
   const showOffers = tab === "ALL" || tab === "OFFER"
   const showUpcoming = tab === "UPCOMING"
 
+  function selectTab(nextTab: HomeTab) {
+    if (nextTab === "IMMEDIATE") {
+      navigate("/immediate")
+      return
+    }
+
+    if (nextTab === "OFFER") {
+      navigate("/offers")
+      return
+    }
+
+    setTab(nextTab)
+  }
+
   return (
     <div className="pb-8">
       <div className="sticky top-16 z-20 border-b border-neutral-100 bg-white px-5 py-3 md:top-[72px] md:px-8">
@@ -49,7 +64,7 @@ export function ProductListPage() {
                   ? "border-neutral-950 bg-neutral-950 text-white"
                   : "border-neutral-200 bg-white text-neutral-500"
               }`}
-              onClick={() => setTab(item.value)}
+              onClick={() => selectTab(item.value)}
             >
               {item.label}
             </button>

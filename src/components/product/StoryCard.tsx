@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { MessageCircleMore } from "lucide-react"
+import { BookOpenText } from "lucide-react"
 
 type StoryCardProps = {
   productId: number
@@ -16,7 +16,6 @@ export function StoryCard({
   writer,
   title,
   excerpt,
-  offerCount,
   image,
   horizontal = false,
 }: StoryCardProps) {
@@ -51,10 +50,10 @@ export function StoryCard({
         </p>
         <div className="mt-auto flex items-center justify-between pt-4 text-xs">
           <span className="flex items-center gap-1 text-neutral-500">
-            <MessageCircleMore className="size-3.5" />
-            오퍼 {offerCount}건
+            <BookOpenText className="size-3.5" />
+            상품 이야기
           </span>
-          <span className="font-semibold text-[#5b72f2]">이야기 보기</span>
+          <span className="font-semibold text-[#5b72f2]">이야기 읽기</span>
         </div>
       </div>
     </Link>
