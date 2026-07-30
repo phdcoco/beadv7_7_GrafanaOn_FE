@@ -61,7 +61,7 @@ export function ProductListPage() {
               type="button"
               className={`h-11 rounded-lg border text-[13px] font-bold transition-colors md:h-12 md:text-sm ${
                 tab === item.value
-                  ? "border-neutral-950 bg-neutral-950 text-white"
+                  ? "border-brand-500 bg-brand-500 text-neutral-950"
                   : "border-neutral-200 bg-white text-neutral-500"
               }`}
               onClick={() => selectTab(item.value)}
@@ -140,10 +140,10 @@ export function ProductListPage() {
         <section className="mx-5 mt-6 grid gap-3 border-y border-neutral-200 py-5 md:mx-8 md:grid-cols-2">
           <Link
             to="/search"
-            className="flex items-center justify-between bg-[#f5f7ff] p-4"
+            className="flex items-center justify-between bg-brand-50 p-4"
           >
             <div>
-              <p className="text-xs font-semibold text-[#5b72f2]">
+              <p className="text-xs font-semibold text-brand-700">
                 무엇을 찾고 있나요?
               </p>
               <p className="mt-1 text-sm font-bold">

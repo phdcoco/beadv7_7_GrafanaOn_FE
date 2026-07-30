@@ -91,7 +91,7 @@ export function SignUpPage() {
 
         <button
           type="submit"
-          className="h-12 w-full rounded-md bg-neutral-950 text-sm font-bold text-white"
+          className="h-12 w-full rounded-md bg-brand-500 text-sm font-bold text-neutral-950 hover:bg-brand-600"
           disabled={signUpMutation.isPending}
         >
           {signUpMutation.isPending ? "가입 중..." : "D:EAR 시작하기"}
@@ -121,7 +121,7 @@ function FormField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
           type={type}
-        className="h-12 w-full rounded-md border border-neutral-300 px-3 text-sm outline-none focus:border-neutral-950"
+        className="h-12 w-full rounded-md border border-neutral-300 px-3 text-sm outline-none focus:border-brand-500"
           placeholder={placeholder}
           minLength={type === "password" ? 8 : undefined}
           maxLength={type === "password" ? 64 : undefined}

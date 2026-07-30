@@ -79,7 +79,7 @@ export function ProductSearchPage() {
           </div>
           <button
             type="submit"
-            className="h-11 shrink-0 rounded-md bg-neutral-950 px-4 text-sm font-bold text-white"
+            className="h-11 shrink-0 rounded-md bg-brand-500 px-4 text-sm font-bold text-neutral-950 hover:bg-brand-600"
           >
             검색
           </button>
@@ -92,7 +92,7 @@ export function ProductSearchPage() {
               type="button"
               className={`h-9 shrink-0 rounded-full px-4 text-xs font-semibold ${
                 type === item.value
-                  ? "bg-neutral-950 text-white"
+                  ? "bg-brand-500 text-neutral-950"
                   : "bg-neutral-100 text-neutral-600"
               }`}
               onClick={() => setType(item.value)}

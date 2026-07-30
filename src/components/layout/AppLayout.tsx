@@ -40,7 +40,7 @@ export function AppLayout() {
   }, [showSplash])
 
   return (
-    <div className="min-h-screen bg-[#f3f3f1] text-neutral-950">
+    <div className="min-h-screen bg-[#f5f4f1] text-neutral-950">
       {showSplash && (
         <div className="fixed inset-0 z-[100] flex animate-[splashOut_300ms_ease-in_1100ms_forwards] flex-col items-center justify-center bg-black text-white">
           <SplashLogo />
@@ -65,7 +65,7 @@ export function AppLayout() {
                     className={({ isActive }) =>
                       cn(
                         "group flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-950",
-                        isActive && "bg-neutral-950 text-white hover:bg-neutral-950 hover:text-white"
+                        isActive && "bg-brand-500 text-neutral-950 hover:bg-brand-600 hover:text-neutral-950"
                       )
                     }
                   >
@@ -110,7 +110,7 @@ export function AppLayout() {
               className={({ isActive }) =>
                 cn(
                   "group relative flex min-w-0 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-neutral-400",
-                  isActive && "text-neutral-950"
+                  isActive && "text-brand-700"
                 )
               }
             >
@@ -119,21 +119,21 @@ export function AppLayout() {
                   <span
                     className={cn(
                       "flex size-8 items-center justify-center rounded-md transition-transform duration-200 ease-out group-hover:-translate-y-1 group-active:scale-95",
-                      isActive && "bg-[#58c8bd]/20"
+                      isActive && "bg-brand-100"
                     )}
                   >
                     {item.to === "/immediate" ? (
                       <Zap
                         className={cn(
                           "size-6",
-                          isActive && "fill-[#ffd448] text-neutral-950"
+                          isActive && "fill-brand-300 text-brand-900"
                         )}
                       />
                     ) : item.to === "/offers" ? (
                       <ShoppingBag
                         className={cn(
                           "size-6",
-                          isActive && "fill-[#ef7469] text-neutral-950"
+                          isActive && "fill-brand-500 text-brand-900"
                         )}
                       />
                     ) : (

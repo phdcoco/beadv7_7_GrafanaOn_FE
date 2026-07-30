@@ -143,7 +143,7 @@ export function ProfilePage() {
       {profile && (
         <section className="border-b border-neutral-100 px-5 py-6 md:px-8">
           <div className="flex items-center gap-4">
-            <span className="flex size-16 shrink-0 items-center justify-center rounded-full bg-[#55c7bd] text-xl font-black text-white">
+            <span className="flex size-16 shrink-0 items-center justify-center rounded-full bg-brand-500 text-xl font-black text-neutral-950">
               {profile.nickname.slice(0, 1)}
             </span>
             <div className="min-w-0 flex-1">
@@ -209,7 +209,7 @@ export function ProfilePage() {
                 </button>
                 <button
                   type="submit"
-                  className="h-11 rounded-md bg-neutral-950 text-sm font-bold text-white"
+                  className="h-11 rounded-md bg-brand-500 text-sm font-bold text-neutral-950 hover:bg-brand-600"
                   disabled={updateMutation.isPending}
                 >
                   {updateMutation.isPending ? "저장 중..." : "저장"}
@@ -350,7 +350,7 @@ export function ProfilePage() {
 function GuestProfile() {
   return (
     <div className="flex min-h-[calc(100vh-136px)] flex-col items-center justify-center px-6 text-center">
-      <span className="flex size-16 items-center justify-center rounded-full bg-neutral-950 text-xl font-black text-white">
+      <span className="flex size-16 items-center justify-center rounded-full bg-brand-500 text-xl font-black text-neutral-950">
         D
       </span>
       <h1 className="mt-5 text-xl font-black">로그인하고 나의 D:EAR를 만나보세요</h1>
@@ -359,7 +359,7 @@ function GuestProfile() {
       </p>
       <Link
         to="/login?redirect=/profile"
-        className="mt-7 flex h-12 w-full max-w-xs items-center justify-center gap-2 rounded-md bg-neutral-950 text-sm font-bold text-white"
+        className="mt-7 flex h-12 w-full max-w-xs items-center justify-center gap-2 rounded-md bg-brand-500 text-sm font-bold text-neutral-950 hover:bg-brand-600"
       >
         로그인
         <ArrowRight className="size-4" />
@@ -387,7 +387,7 @@ function ProfileField({
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-11 w-full rounded-md border border-neutral-300 px-3 text-sm outline-none focus:border-neutral-950"
+        className="h-11 w-full rounded-md border border-neutral-300 px-3 text-sm outline-none focus:border-brand-500"
         placeholder={placeholder}
         maxLength={maxLength}
         required
