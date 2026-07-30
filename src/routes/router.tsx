@@ -38,6 +38,31 @@ export const router = createBrowserRouter([
         element: <PurchasePaymentResultPage />,
       },
       {
+        path: "/wallet/charge",
+        lazy: async () => {
+          const { WalletChargePage } = await import("@/pages/WalletChargePage")
+          return { Component: WalletChargePage }
+        },
+      },
+      {
+        path: "/wallet/charge/success",
+        lazy: async () => {
+          const { WalletChargeSuccessPage } = await import(
+            "@/pages/WalletChargeSuccessPage"
+          )
+          return { Component: WalletChargeSuccessPage }
+        },
+      },
+      {
+        path: "/wallet/charge/fail",
+        lazy: async () => {
+          const { WalletChargeFailPage } = await import(
+            "@/pages/WalletChargeFailPage"
+          )
+          return { Component: WalletChargeFailPage }
+        },
+      },
+      {
         path: "/immediate",
         element: <ImmediatePurchasePage />,
       },

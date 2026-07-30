@@ -6,6 +6,7 @@ import {
   Bookmark,
   LogOut,
   Pencil,
+  Plus,
   ReceiptText,
   WalletCards,
 } from "lucide-react"
@@ -241,9 +242,18 @@ export function ProfilePage() {
       </section>
 
       <section className="border-b border-neutral-100 px-5 py-6 md:px-8">
-        <div className="flex items-center gap-2">
-          <WalletCards className="size-5" />
-          <h2 className="text-base font-black">나의 예치금</h2>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <WalletCards className="size-5" />
+            <h2 className="text-base font-black">나의 예치금</h2>
+          </div>
+          <Link
+            to="/wallet/charge"
+            className="flex h-9 items-center gap-1 rounded-md bg-brand px-3 text-xs font-black text-white"
+          >
+            <Plus className="size-3.5" />
+            충전
+          </Link>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-neutral-200 bg-neutral-200">
           <Balance

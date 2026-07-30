@@ -1,6 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom"
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,6 +24,7 @@ import { isAuthenticated } from "@/lib/authStorage"
 import { formatPrice } from "@/lib/format"
 
 export function CheckoutPage() {
+  const location = useLocation()
   const navigate = useNavigate()
   const { productId } = useParams()
   const [searchParams] = useSearchParams()
@@ -233,6 +240,14 @@ export function CheckoutPage() {
               <p className="mt-1 text-xs leading-5 text-red-600">
                 예치금을 충전한 후 다시 결제해 주세요.
               </p>
+              <Link
+                to={`/wallet/charge?${new URLSearchParams({
+                  returnTo: `${location.pathname}${location.search}`,
+                }).toString()}`}
+                className="mt-3 inline-flex h-9 items-center rounded-md bg-red-600 px-3 text-xs font-black text-white"
+              >
+                부족한 예치금 충전
+              </Link>
             </div>
           )}
         </section>

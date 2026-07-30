@@ -31,7 +31,8 @@ export function AppLayout() {
     pathname.startsWith("/products/") ||
     pathname.startsWith("/checkout/") ||
     pathname.startsWith("/payments/purchases/") ||
-    pathname.startsWith("/sell/products/")
+    pathname.startsWith("/sell/products/") ||
+    pathname.startsWith("/wallet/charge")
 
   useEffect(() => {
     if (!showSplash) {
