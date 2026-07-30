@@ -129,12 +129,18 @@ export function SellerSection() {
       {products.length > 0 && (
         <div className="no-scrollbar mt-4 flex gap-3 overflow-x-auto px-5 md:px-8">
           {products.map((product) => (
-            <article key={product.id} className="w-40 shrink-0">
+            <Link
+              key={product.id}
+              to={`/products/${product.id}${
+                product.saleType ? `?saleType=${product.saleType}` : ""
+              }`}
+              className="group w-40 shrink-0"
+            >
               <div className="relative overflow-hidden rounded-md bg-neutral-100">
                 <img
                   src={product.url}
                   alt={product.name}
-                  className="aspect-square w-full object-cover"
+                  className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                 />
                 <span className="absolute left-2 top-2 rounded bg-neutral-950/80 px-2 py-1 text-[10px] font-bold text-white">
                   {statusLabels[product.status]}
@@ -155,7 +161,7 @@ export function SellerSection() {
                   {product.viewCount}
                 </span>
               </div>
-            </article>
+            </Link>
           ))}
         </div>
       )}

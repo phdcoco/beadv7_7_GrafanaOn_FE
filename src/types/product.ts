@@ -105,6 +105,7 @@ export type UploadedProductImage = {
 
 export type SellerProduct = {
   id: number
+  saleType?: ProductSaleType
   status: ProductStatus
   url: string
   name: string

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom"
 import { BookOpenText } from "lucide-react"
+import { ProductScrapButton } from "@/components/product/ProductScrapButton"
 
 type StoryCardProps = {
   productId: number
@@ -19,25 +20,37 @@ export function StoryCard({
   image,
   horizontal = false,
 }: StoryCardProps) {
+  const productPath = `/products/${productId}?saleType=OFFER`
+
   return (
-    <Link
-      to={`/products/${productId}?saleType=OFFER`}
+    <article
       className={
         horizontal
           ? "grid w-[18rem] shrink-0 grid-cols-[104px_1fr] overflow-hidden rounded-lg border border-neutral-200 bg-white"
           : "block overflow-hidden border-b border-neutral-200 bg-white sm:rounded-lg sm:border"
       }
     >
-      <img
-        src={image}
-        alt=""
-        className={
-          horizontal
-            ? "h-full min-h-48 w-full object-cover"
-            : "aspect-[16/10] w-full object-cover"
-        }
-      />
-      <div className={horizontal ? "flex min-w-0 flex-col p-3" : "p-4"}>
+      <div className="relative">
+        <Link to={productPath} aria-label={`${title} 상세 보기`}>
+          <img
+            src={image}
+            alt={title}
+            className={
+              horizontal
+                ? "h-full min-h-48 w-full object-cover"
+                : "aspect-[16/10] w-full object-cover"
+            }
+          />
+        </Link>
+        <ProductScrapButton
+          productId={productId}
+          className="absolute bottom-2 right-2"
+        />
+      </div>
+      <Link
+        to={productPath}
+        className={horizontal ? "flex min-w-0 flex-col p-3" : "block p-4"}
+      >
         <div className="flex items-center gap-2">
           <span className="flex size-7 items-center justify-center rounded-full bg-brand text-xs font-bold text-neutral-950">
             {writer.slice(0, 1)}
@@ -57,7 +70,7 @@ export function StoryCard({
             이야기 읽기
           </span>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </article>
   )
 }
