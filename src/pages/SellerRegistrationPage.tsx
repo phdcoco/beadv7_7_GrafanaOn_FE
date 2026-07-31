@@ -43,7 +43,7 @@ export function SellerRegistrationPage() {
     mutationFn: registerSeller,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["seller-account", "me"] })
-      navigate("/sell/products/new", { replace: true })
+      navigate("/profile", { replace: true })
     },
   })
 
@@ -193,7 +193,7 @@ export function SellerRegistrationPage() {
             {registerMutation.isPending && (
               <LoaderCircle className="size-4 animate-spin" />
             )}
-            {registerMutation.isPending ? "등록 중..." : "판매자 등록하고 상품 올리기"}
+            {registerMutation.isPending ? "등록 중..." : "판매자로 등록하기"}
           </button>
         </form>
       </div>

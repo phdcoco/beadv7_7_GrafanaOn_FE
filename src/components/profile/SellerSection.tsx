@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "react-router-dom"
 import {
   ArrowRight,
+  CalendarDays,
   Eye,
   Inbox,
   LoaderCircle,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react"
 import { getSellerAccount, unregisterSeller } from "@/api/memberApi"
 import { deleteProduct, getMySellerProducts } from "@/api/productApi"
+import { getSettlementPreview } from "@/api/settlementApi"
 import { getApiErrorMessage } from "@/lib/apiClient"
 import { formatPrice } from "@/lib/format"
 import type { ProductStatus, SellerProduct } from "@/types/product"
@@ -25,6 +27,7 @@ const statusLabels: Record<ProductStatus, string> = {
 
 export function SellerSection() {
   const queryClient = useQueryClient()
+  const settlementMonth = getNextSettlementMonth()
   const sellerQuery = useQuery({
     queryKey: ["seller-account", "me"],
     queryFn: getSellerAccount,
@@ -33,6 +36,11 @@ export function SellerSection() {
   const productsQuery = useQuery({
     queryKey: ["seller-products", "me"],
     queryFn: getMySellerProducts,
+    enabled: Boolean(sellerAccount),
+  })
+  const settlementQuery = useQuery({
+    queryKey: ["settlement-preview", settlementMonth.value],
+    queryFn: () => getSettlementPreview(settlementMonth.value),
     enabled: Boolean(sellerAccount),
   })
 
@@ -175,6 +183,36 @@ export function SellerSection() {
         </div>
       </div>
 
+      <div className="mx-5 mt-5 grid grid-cols-[1fr_auto] items-center gap-4 border-y border-neutral-100 py-4 md:mx-8">
+        <div>
+          <div className="flex items-center gap-2">
+            <CalendarDays className="size-4 text-brand" />
+            <p className="text-xs font-bold text-neutral-500">
+              {settlementMonth.label} 정산 예정
+            </p>
+          </div>
+          <p className="mt-1 text-[11px] text-neutral-400">
+            매월 1일 오전 5시 · 수수료 제외
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-lg font-black">
+            {settlementQuery.isLoading
+              ? "-"
+              : `${formatPrice(settlementQuery.data?.netAmount ?? 0)}원`}
+          </p>
+          {settlementQuery.isError && (
+            <button
+              type="button"
+              className="mt-1 text-[11px] font-bold text-red-600 underline"
+              onClick={() => void settlementQuery.refetch()}
+            >
+              다시 불러오기
+            </button>
+          )}
+        </div>
+      </div>
+
       {hasActiveProducts && (
         <p className="mt-3 px-5 text-xs text-neutral-500 md:px-8">
           공개 예정 또는 판매 중인 상품을 모두 삭제하면 판매자 등록을
@@ -298,4 +336,22 @@ export function SellerSection() {
       )}
     </section>
   )
+}
+
+function getNextSettlementMonth() {
+  const now = new Date()
+  const beforeCurrentMonthPayout =
+    now.getDate() === 1 && now.getHours() < 5
+  const payoutDate = new Date(
+    now.getFullYear(),
+    now.getMonth() + (beforeCurrentMonthPayout ? 0 : 1),
+    1
+  )
+  const year = payoutDate.getFullYear()
+  const month = payoutDate.getMonth() + 1
+
+  return {
+    value: `${year}-${String(month).padStart(2, "0")}`,
+    label: `${month}월 1일`,
+  }
 }
