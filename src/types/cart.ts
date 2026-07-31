@@ -4,7 +4,7 @@ export type CartItem = {
   cartItemId: number
   productId: number
   productName: string
-  thumbnailUrl: string
+  thumbnailUrl: string | null
   productPrice: number
   status: CartItemStatus | string
 }

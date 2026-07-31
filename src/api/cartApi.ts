@@ -1,4 +1,5 @@
 import { mockProducts } from "@/data/mockProducts"
+import { getProducts } from "@/api/productApi"
 import { apiClient, ApiClientError } from "@/lib/apiClient"
 import { unwrapData } from "@/lib/apiResponse"
 import { USE_MOCKS } from "@/lib/runtime"
@@ -14,13 +15,37 @@ export async function getCart(): Promise<Cart> {
 
   try {
     const { data } = await apiClient.get<ApiResponse<Cart>>("/api/carts")
-    return unwrapData(data)
+    return fillMissingThumbnailUrls(unwrapData(data))
   } catch (error) {
     if (error instanceof ApiClientError && error.code === "CT-003") {
       return { cartId: null, items: [] }
     }
 
     throw error
+  }
+}
+
+async function fillMissingThumbnailUrls(cart: Cart): Promise<Cart> {
+  if (cart.items.every((item) => Boolean(item.thumbnailUrl))) {
+    return cart
+  }
+
+  try {
+    const products = await getProducts()
+    const imageUrlByProductId = new Map(
+      products.map((product) => [product.id, product.url])
+    )
+
+    return {
+      ...cart,
+      items: cart.items.map((item) => ({
+        ...item,
+        thumbnailUrl:
+          item.thumbnailUrl ?? imageUrlByProductId.get(item.productId) ?? null,
+      })),
+    }
+  } catch {
+    return cart
   }
 }
 

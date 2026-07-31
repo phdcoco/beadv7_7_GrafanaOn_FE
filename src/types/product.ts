@@ -62,6 +62,8 @@ export type SearchProduct = {
   saleType: string
   viewCount: number
   description: string | null
+  brand?: string
+  imageUrl?: string
 }
 
 export type SearchProductsParams = {

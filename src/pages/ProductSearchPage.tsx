@@ -3,9 +3,8 @@ import { useQuery } from "@tanstack/react-query"
 import { ArrowLeft, ImageOff, Search, SlidersHorizontal, X } from "lucide-react"
 import { Link } from "react-router-dom"
 import { searchProducts } from "@/api/searchApi"
-import { mockProducts } from "@/data/mockProducts"
 import { formatPrice } from "@/lib/format"
-import { USE_MOCKS } from "@/lib/runtime"
+import { getApiErrorMessage } from "@/lib/apiClient"
 import type { ProductSearchSort, ProductSearchType } from "@/types/product"
 
 const searchTypes: { value: ProductSearchType; label: string }[] = [
@@ -141,12 +140,24 @@ export function ProductSearchPage() {
         <div className="p-8 text-center text-sm text-neutral-500">검색 중입니다.</div>
       )}
 
+      {productsQuery.isError && (
+        <div className="px-6 py-12 text-center">
+          <p className="text-sm font-bold">검색 결과를 불러오지 못했습니다.</p>
+          <p className="mt-2 text-xs text-neutral-500">
+            {getApiErrorMessage(productsQuery.error)}
+          </p>
+          <button
+            type="button"
+            className="mt-5 h-10 rounded-md border border-neutral-300 px-4 text-xs font-bold"
+            onClick={() => productsQuery.refetch()}
+          >
+            다시 시도
+          </button>
+        </div>
+      )}
+
       <div className="grid divide-y divide-neutral-100 md:grid-cols-2 md:divide-x md:divide-y-0">
         {productsQuery.data?.content.map((product) => {
-          const image = USE_MOCKS
-            ? mockProducts.find((item) => item.id === product.productId)?.url
-            : undefined
-
           return (
             <Link
               key={`${product.productId ?? product.modelNumber}-${product.productName}`}
@@ -164,9 +175,9 @@ export function ProductSearchPage() {
               className="grid grid-cols-[104px_1fr] gap-4 p-4 md:p-5"
             >
               <div className="overflow-hidden rounded-md bg-neutral-100">
-                {image ? (
+                {product.imageUrl ? (
                   <img
-                    src={image}
+                    src={product.imageUrl}
                     alt={product.productName}
                     className="aspect-square size-full object-cover"
                   />
@@ -177,7 +188,11 @@ export function ProductSearchPage() {
                 )}
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-neutral-400">{product.category}</p>
+                {(product.brand || product.category) && (
+                  <p className="text-xs text-neutral-400">
+                    {product.brand || product.category}
+                  </p>
+                )}
                 <p className="mt-1 line-clamp-2 text-sm font-bold">
                   {product.productName}
                 </p>
@@ -185,7 +200,8 @@ export function ProductSearchPage() {
                   {formatPrice(product.productPrice)}원
                 </p>
                 <p className="mt-2 text-xs text-neutral-400">
-                  {product.modelNumber} · 조회 {product.viewCount.toLocaleString()}
+                  {product.modelNumber && `${product.modelNumber} · `}
+                  조회 {product.viewCount.toLocaleString()}
                 </p>
               </div>
             </Link>

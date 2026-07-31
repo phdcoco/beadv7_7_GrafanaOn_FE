@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom"
 import {
   ArrowRight,
   Check,
+  ImageOff,
   LoaderCircle,
   ShoppingCart,
   Trash2,
@@ -172,11 +173,17 @@ export function CartPage() {
                   to={`/products/${item.productId}?saleType=IMMEDIATE`}
                   className="overflow-hidden rounded-md bg-neutral-100"
                 >
-                  <img
-                    src={item.thumbnailUrl}
-                    alt={item.productName}
-                    className="aspect-square size-full object-cover"
-                  />
+                  {item.thumbnailUrl ? (
+                    <img
+                      src={item.thumbnailUrl}
+                      alt={item.productName}
+                      className="aspect-square size-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex aspect-square size-full items-center justify-center text-neutral-300">
+                      <ImageOff className="size-6" />
+                    </span>
+                  )}
                 </Link>
 
                 <div className="flex min-w-0 flex-col">
