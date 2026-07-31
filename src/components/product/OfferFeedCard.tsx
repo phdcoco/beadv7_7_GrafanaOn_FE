@@ -6,12 +6,17 @@ type OfferFeedCardProps = {
 }
 
 export function OfferFeedCard({ product }: OfferFeedCardProps) {
+  const writer = product.writerNickname?.trim() || "판매자"
+  const story =
+    product.storyPreview?.trim() ||
+    `${product.name}에 담긴 판매자의 이야기를 확인해 보세요.`
+
   return (
     <StoryCard
       productId={product.id}
-      writer="판매자"
+      writer={writer}
       title={product.name}
-      excerpt="이 상품이 지나온 이야기를 사진과 함께 확인해 보세요."
+      excerpt={story}
       image={product.url}
     />
   )

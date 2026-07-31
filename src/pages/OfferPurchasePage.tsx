@@ -79,15 +79,15 @@ export function OfferPurchasePage() {
       </div>
 
       {productsQuery.isLoading && (
-        <div className="mx-auto max-w-[620px] space-y-4 py-4 sm:px-4">
-          {Array.from({ length: 3 }).map((_, index) => (
+        <div className="mx-auto grid max-w-[980px] grid-cols-2 gap-3 px-3 py-4 sm:gap-4 sm:px-4 md:px-8">
+          {Array.from({ length: 4 }).map((_, index) => (
             <div
               key={index}
-              className="overflow-hidden border-y border-neutral-200 bg-white sm:rounded-lg sm:border"
+              className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
             >
-              <div className="h-14 animate-pulse bg-neutral-50" />
+              <div className="h-12 animate-pulse bg-neutral-50 sm:h-14" />
               <div className="aspect-[4/5] animate-pulse bg-neutral-100" />
-              <div className="space-y-2 p-4">
+              <div className="space-y-2 p-3 sm:p-4">
                 <div className="h-4 w-2/3 bg-neutral-100" />
                 <div className="h-3 w-full bg-neutral-100" />
                 <div className="h-3 w-4/5 bg-neutral-100" />
@@ -104,13 +104,13 @@ export function OfferPurchasePage() {
       )}
 
       {USE_MOCKS ? (
-        <div className="mx-auto max-w-[620px] space-y-4 py-4 sm:px-4">
+        <div className="mx-auto grid max-w-[980px] grid-cols-2 gap-3 px-3 py-4 sm:gap-4 sm:px-4 md:px-8">
           {visibleStories.map((story) => (
             <StoryCard key={story.productId} {...story} />
           ))}
         </div>
       ) : (
-        <div className="mx-auto max-w-[620px] space-y-4 py-4 sm:px-4">
+        <div className="mx-auto grid max-w-[980px] grid-cols-2 gap-3 px-3 py-4 sm:gap-4 sm:px-4 md:px-8">
           {products.map((product) => (
             <OfferFeedCard key={product.id} product={product} />
           ))}

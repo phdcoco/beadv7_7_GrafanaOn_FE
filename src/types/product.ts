@@ -26,6 +26,8 @@ export type ProductSummary = {
   brand: string
   price: number
   viewCount: number
+  writerNickname?: string
+  storyPreview?: string
 }
 
 export type ProductImage = {
