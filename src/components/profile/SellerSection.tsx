@@ -1,17 +1,20 @@
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "react-router-dom"
 import {
   ArrowRight,
   Eye,
+  LoaderCircle,
   Plus,
   ReceiptText,
   Store,
+  Trash2,
+  UserRoundX,
 } from "lucide-react"
-import { getSellerAccount } from "@/api/memberApi"
-import { getMySellerProducts } from "@/api/productApi"
+import { getSellerAccount, unregisterSeller } from "@/api/memberApi"
+import { deleteProduct, getMySellerProducts } from "@/api/productApi"
 import { getApiErrorMessage } from "@/lib/apiClient"
 import { formatPrice } from "@/lib/format"
-import type { ProductStatus } from "@/types/product"
+import type { ProductStatus, SellerProduct } from "@/types/product"
 
 const statusLabels: Record<ProductStatus, string> = {
   PREPARING: "공개 예정",
@@ -20,6 +23,7 @@ const statusLabels: Record<ProductStatus, string> = {
 }
 
 export function SellerSection() {
+  const queryClient = useQueryClient()
   const sellerQuery = useQuery({
     queryKey: ["seller-account", "me"],
     queryFn: getSellerAccount,
@@ -29,6 +33,30 @@ export function SellerSection() {
     queryKey: ["seller-products", "me"],
     queryFn: getMySellerProducts,
     enabled: Boolean(sellerAccount),
+  })
+
+  const deleteProductMutation = useMutation({
+    mutationFn: deleteProduct,
+    onSuccess: (_, productId) => {
+      queryClient.setQueryData<SellerProduct[]>(
+        ["seller-products", "me"],
+        (products) => products?.filter((product) => product.id !== productId)
+      )
+      queryClient.removeQueries({
+        queryKey: ["product-detail", productId],
+      })
+      void queryClient.invalidateQueries({ queryKey: ["products"] })
+      void queryClient.invalidateQueries({ queryKey: ["search-products"] })
+      void queryClient.invalidateQueries({ queryKey: ["scraps", "me"] })
+    },
+  })
+
+  const unregisterMutation = useMutation({
+    mutationFn: unregisterSeller,
+    onSuccess: () => {
+      queryClient.setQueryData(["seller-account", "me"], null)
+      queryClient.removeQueries({ queryKey: ["seller-products", "me"] })
+    },
   })
 
   if (sellerQuery.isLoading) {
@@ -72,10 +100,34 @@ export function SellerSection() {
   }
 
   const products = productsQuery.data ?? []
+  const hasActiveProducts = products.some(
+    (product) =>
+      product.status === "PREPARING" || product.status === "ON_SALE"
+  )
+
+  function handleDeleteProduct(product: SellerProduct) {
+    const confirmed = window.confirm(
+      `"${product.name}" 상품을 삭제할까요?\n삭제한 상품은 복구할 수 없습니다.`
+    )
+
+    if (confirmed) {
+      deleteProductMutation.mutate(product.id)
+    }
+  }
+
+  function handleUnregisterSeller() {
+    const confirmed = window.confirm(
+      "판매자 등록을 해지할까요?\n해지 후에는 상품을 등록할 수 없습니다."
+    )
+
+    if (confirmed) {
+      unregisterMutation.mutate()
+    }
+  }
 
   return (
     <section className="border-b border-neutral-100 py-6">
-      <div className="flex items-start justify-between gap-4 px-5 md:px-8">
+      <div className="flex flex-col gap-4 px-5 sm:flex-row sm:items-start sm:justify-between md:px-8">
         <div>
           <div className="flex items-center gap-2">
             <Store className="size-5" />
@@ -88,14 +140,52 @@ export function SellerSection() {
             {sellerAccount.bank} · {sellerAccount.account}
           </p>
         </div>
-        <Link
-          to="/sell/products/new"
-          className="flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-neutral-950 px-3 text-xs font-bold text-white"
-        >
-          <Plus className="size-3.5" />
-          상품 등록
-        </Link>
+        <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
+          <button
+            type="button"
+            className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border border-neutral-300 px-3 text-xs font-bold text-neutral-600 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-300 sm:flex-none"
+            title={
+              hasActiveProducts
+                ? "공개 예정 또는 판매 중인 상품을 먼저 삭제해 주세요."
+                : "판매자 등록 해지"
+            }
+            disabled={
+              productsQuery.isLoading ||
+              productsQuery.isError ||
+              hasActiveProducts ||
+              unregisterMutation.isPending
+            }
+            onClick={handleUnregisterSeller}
+          >
+            {unregisterMutation.isPending ? (
+              <LoaderCircle className="size-3.5 animate-spin" />
+            ) : (
+              <UserRoundX className="size-3.5" />
+            )}
+            등록 해지
+          </button>
+          <Link
+            to="/sell/products/new"
+            className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md bg-neutral-950 px-3 text-xs font-bold text-white sm:flex-none"
+          >
+            <Plus className="size-3.5" />
+            상품 등록
+          </Link>
+        </div>
       </div>
+
+      {hasActiveProducts && (
+        <p className="mt-3 px-5 text-xs text-neutral-500 md:px-8">
+          공개 예정 또는 판매 중인 상품을 모두 삭제하면 판매자 등록을
+          해지할 수 있어요.
+        </p>
+      )}
+
+      {unregisterMutation.isError && (
+        <p className="mt-3 px-5 text-xs text-red-600 md:px-8">
+          {getApiErrorMessage(unregisterMutation.error)}
+        </p>
+      )}
 
       <div className="mt-5 flex items-center justify-between px-5 md:px-8">
         <div className="flex items-center gap-2">
@@ -115,6 +205,12 @@ export function SellerSection() {
         </p>
       )}
 
+      {deleteProductMutation.isError && (
+        <p className="mx-5 mt-4 text-sm text-red-600 md:mx-8">
+          {getApiErrorMessage(deleteProductMutation.error)}
+        </p>
+      )}
+
       {!productsQuery.isLoading &&
         !productsQuery.isError &&
         products.length === 0 && (
@@ -128,41 +224,66 @@ export function SellerSection() {
 
       {products.length > 0 && (
         <div className="no-scrollbar mt-4 flex gap-3 overflow-x-auto px-5 md:px-8">
-          {products.map((product) => (
-            <Link
-              key={product.id}
-              to={`/products/${product.id}${
-                product.saleType ? `?saleType=${product.saleType}` : ""
-              }`}
-              className="group w-40 shrink-0"
-            >
-              <div className="relative overflow-hidden rounded-md bg-neutral-100">
-                <img
-                  src={product.url}
-                  alt={product.name}
-                  className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                />
-                <span className="absolute left-2 top-2 rounded bg-neutral-950/80 px-2 py-1 text-[10px] font-bold text-white">
-                  {statusLabels[product.status]}
-                </span>
-              </div>
-              <p className="mt-2 truncate text-xs text-neutral-500">
-                {product.brand}
-              </p>
-              <p className="mt-1 line-clamp-2 text-sm font-bold leading-5">
-                {product.name}
-              </p>
-              <div className="mt-1 flex items-center justify-between gap-2">
-                <p className="text-sm font-black">
-                  {formatPrice(product.price)}원
-                </p>
-                <span className="flex items-center gap-1 text-[10px] text-neutral-400">
-                  <Eye className="size-3" />
-                  {product.viewCount}
-                </span>
-              </div>
-            </Link>
-          ))}
+          {products.map((product) => {
+            const productPath = `/products/${product.id}${
+              product.saleType ? `?saleType=${product.saleType}` : ""
+            }`
+            const deleting =
+              deleteProductMutation.isPending &&
+              deleteProductMutation.variables === product.id
+
+            return (
+              <article key={product.id} className="group w-40 shrink-0">
+                <div className="relative overflow-hidden rounded-md bg-neutral-100">
+                  <Link
+                    to={productPath}
+                    aria-label={`${product.name} 상세 보기`}
+                  >
+                    <img
+                      src={product.url}
+                      alt={product.name}
+                      className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                    />
+                  </Link>
+                  <span className="absolute left-2 top-2 rounded bg-neutral-950/80 px-2 py-1 text-[10px] font-bold text-white">
+                    {statusLabels[product.status]}
+                  </span>
+                  {product.status !== "SOLD_OUT" && (
+                    <button
+                      type="button"
+                      className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-white/95 text-red-600 shadow-sm transition hover:bg-white disabled:text-neutral-300"
+                      aria-label={`${product.name} 삭제`}
+                      disabled={deleteProductMutation.isPending}
+                      onClick={() => handleDeleteProduct(product)}
+                    >
+                      {deleting ? (
+                        <LoaderCircle className="size-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+                <Link to={productPath} className="block">
+                  <p className="mt-2 truncate text-xs text-neutral-500">
+                    {product.brand}
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-sm font-bold leading-5">
+                    {product.name}
+                  </p>
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <p className="text-sm font-black">
+                      {formatPrice(product.price)}원
+                    </p>
+                    <span className="flex items-center gap-1 text-[10px] text-neutral-400">
+                      <Eye className="size-3" />
+                      {product.viewCount}
+                    </span>
+                  </div>
+                </Link>
+              </article>
+            )
+          })}
         </div>
       )}
     </section>

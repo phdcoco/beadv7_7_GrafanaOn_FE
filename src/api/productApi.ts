@@ -109,6 +109,21 @@ export async function getMySellerProducts(): Promise<SellerProduct[]> {
   return unwrapData(data)
 }
 
+export async function deleteProduct(productId: number) {
+  if (USE_MOCKS) {
+    const productIndex = mockSellerProducts.findIndex(
+      (product) => product.id === productId
+    )
+
+    if (productIndex >= 0) {
+      mockSellerProducts.splice(productIndex, 1)
+    }
+    return
+  }
+
+  await apiClient.delete<ApiResponse<void>>(`/api/products/${productId}`)
+}
+
 export async function uploadProductImages(
   images: ProductImageUpload[]
 ): Promise<UploadedProductImage[]> {
