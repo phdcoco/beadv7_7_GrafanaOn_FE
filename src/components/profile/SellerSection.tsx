@@ -199,7 +199,9 @@ export function SellerSection() {
           <p className="text-lg font-black">
             {settlementQuery.isLoading
               ? "-"
-              : `${formatPrice(settlementQuery.data?.netAmount ?? 0)}원`}
+              : settlementQuery.isError
+                ? "조회 실패"
+                : `${formatPrice(settlementQuery.data?.netAmount ?? 0)}원`}
           </p>
           {settlementQuery.isError && (
             <button
@@ -212,6 +214,12 @@ export function SellerSection() {
           )}
         </div>
       </div>
+
+      {settlementQuery.isError && (
+        <p className="mx-5 mt-2 text-right text-[11px] text-red-600 md:mx-8">
+          {getApiErrorMessage(settlementQuery.error)}
+        </p>
+      )}
 
       {hasActiveProducts && (
         <p className="mt-3 px-5 text-xs text-neutral-500 md:px-8">

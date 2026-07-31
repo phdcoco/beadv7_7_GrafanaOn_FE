@@ -80,6 +80,11 @@ export function SellerOffersPage() {
       await queryClient.invalidateQueries({
         queryKey: ["seller-offers", parsedProductId],
       })
+      if (variables.action === "accept") {
+        await queryClient.invalidateQueries({
+          queryKey: ["settlement-preview"],
+        })
+      }
     },
   })
 
