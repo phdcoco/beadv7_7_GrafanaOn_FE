@@ -39,6 +39,7 @@ export async function getProducts(params?: GetProductsParams) {
         id: product.id,
         saleType: product.saleType,
         status: product.status,
+        category: product.detail.category,
         url: product.url,
         name: product.name,
         brand: product.brand,
@@ -51,8 +52,10 @@ export async function getProducts(params?: GetProductsParams) {
       const matchesSaleType =
         !params?.saleType || product.saleType === params.saleType
       const matchesStatus = !params?.status || product.status === params.status
+      const matchesCategory =
+        !params?.category || product.category === params.category
 
-      return matchesSaleType && matchesStatus
+      return matchesSaleType && matchesStatus && matchesCategory
     })
   }
 

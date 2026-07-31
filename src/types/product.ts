@@ -18,6 +18,7 @@ export type ProductSummary = {
   id: number
   saleType: ProductSaleType
   status: ProductStatus
+  category?: ProductCategory
   url: string
   name: string
   brand: string
@@ -40,7 +41,7 @@ export type ProductDetail = {
   brand: string
   price: number
   modelNumber: string
-  category: string
+  category: ProductCategory
   releaseDate: string | null
   viewCount: number
   description: string | null
@@ -70,6 +71,7 @@ export type SearchProductsParams = {
 export type GetProductsParams = {
   saleType?: ProductSaleType
   status?: ProductStatus
+  category?: ProductCategory
   createdAt?: string
 }
 

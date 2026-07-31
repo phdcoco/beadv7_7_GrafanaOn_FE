@@ -3,26 +3,25 @@ import { useQuery } from "@tanstack/react-query"
 import { ChevronDown, SlidersHorizontal } from "lucide-react"
 import { getProducts } from "@/api/productApi"
 import { ProductCard } from "@/components/product/ProductCard"
+import {
+  productCategoryOptions,
+  type ProductCategoryFilter,
+} from "@/constants/productCategories"
 
 const primaryFilters = ["NEW", "전체", "급상승", "오프라인", "부티크", "USED"]
-const categories = [
-  "전체",
-  "스니커즈",
-  "스포츠화",
-  "구두",
-  "부츠/워커",
-  "샌들/슬리퍼",
-  "패딩/퍼 신발",
-]
 
 export function ImmediatePurchasePage() {
   const [primaryFilter, setPrimaryFilter] = useState("NEW")
-  const [category, setCategory] = useState("전체")
+  const [category, setCategory] = useState<ProductCategoryFilter>("ALL")
 
   const productsQuery = useQuery({
-    queryKey: ["products", "IMMEDIATE", "grid"],
+    queryKey: ["products", "IMMEDIATE", "grid", category],
     queryFn: () =>
-      getProducts({ saleType: "IMMEDIATE", status: "ON_SALE" }),
+      getProducts({
+        saleType: "IMMEDIATE",
+        status: "ON_SALE",
+        category: category === "ALL" ? undefined : category,
+      }),
   })
 
   const products = useMemo(() => productsQuery.data ?? [], [productsQuery.data])
@@ -48,18 +47,18 @@ export function ImmediatePurchasePage() {
         </div>
 
         <div className="no-scrollbar flex gap-5 overflow-x-auto bg-neutral-50 px-4 py-3 md:px-8">
-          {categories.map((item) => (
+          {productCategoryOptions.map((item) => (
             <button
-              key={item}
+              key={item.value}
               type="button"
               className={`shrink-0 text-xs ${
-                category === item
+                category === item.value
                   ? "font-extrabold text-neutral-950 underline decoration-brand decoration-2 underline-offset-4"
                   : "font-medium text-neutral-500"
               }`}
-              onClick={() => setCategory(item)}
+              onClick={() => setCategory(item.value)}
             >
-              {item}
+              {item.label}
             </button>
           ))}
         </div>
@@ -99,6 +98,12 @@ export function ImmediatePurchasePage() {
           <ProductCard key={product.id} product={product} compact />
         ))}
       </div>
+
+      {!productsQuery.isLoading && products.length === 0 && (
+        <p className="p-10 text-center text-sm text-neutral-500">
+          선택한 카테고리의 즉시구매 상품이 없습니다.
+        </p>
+      )}
     </div>
   )
 }

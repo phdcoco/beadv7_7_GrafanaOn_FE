@@ -4,6 +4,10 @@ import { Flame, Sparkles } from "lucide-react"
 import { getProducts } from "@/api/productApi"
 import { ProductCard } from "@/components/product/ProductCard"
 import { StoryCard } from "@/components/product/StoryCard"
+import {
+  productCategoryOptions,
+  type ProductCategoryFilter,
+} from "@/constants/productCategories"
 import { offerStories } from "@/data/mockProducts"
 import { USE_MOCKS } from "@/lib/runtime"
 
@@ -14,9 +18,15 @@ const filters = [
 
 export function OfferPurchasePage() {
   const [selectedFilter, setSelectedFilter] = useState(filters[0].label)
+  const [category, setCategory] = useState<ProductCategoryFilter>("ALL")
   const productsQuery = useQuery({
-    queryKey: ["products", "OFFER", "feed"],
-    queryFn: () => getProducts({ saleType: "OFFER", status: "ON_SALE" }),
+    queryKey: ["products", "OFFER", "feed", category],
+    queryFn: () =>
+      getProducts({
+        saleType: "OFFER",
+        status: "ON_SALE",
+        category: category === "ALL" ? undefined : category,
+      }),
   })
 
   const products = useMemo(() => {
@@ -28,6 +38,13 @@ export function OfferPurchasePage() {
 
     return items
   }, [productsQuery.data, selectedFilter])
+  const visibleStories = useMemo(() => {
+    const productIds = new Set(products.map((product) => product.id))
+    return offerStories.filter((story) => productIds.has(story.productId))
+  }, [products])
+  const visibleProductCount = USE_MOCKS
+    ? visibleStories.length
+    : products.length
 
   return (
     <div className="pb-6">
@@ -53,6 +70,22 @@ export function OfferPurchasePage() {
             </button>
           ))}
         </div>
+        <div className="-mx-5 mt-4 no-scrollbar flex gap-5 overflow-x-auto bg-neutral-50 px-5 py-3 md:-mx-8 md:px-8">
+          {productCategoryOptions.map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              className={`shrink-0 text-xs ${
+                category === item.value
+                  ? "font-extrabold text-neutral-950 underline decoration-brand decoration-2 underline-offset-4"
+                  : "font-medium text-neutral-500"
+              }`}
+              onClick={() => setCategory(item.value)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {productsQuery.isLoading && (
@@ -74,7 +107,7 @@ export function OfferPurchasePage() {
 
       {USE_MOCKS ? (
         <div className="grid md:grid-cols-2 md:gap-4 md:p-8 lg:grid-cols-3">
-          {offerStories.map((story) => (
+          {visibleStories.map((story) => (
             <StoryCard key={story.productId} {...story} />
           ))}
         </div>
@@ -86,9 +119,9 @@ export function OfferPurchasePage() {
         </div>
       )}
 
-      {!productsQuery.isLoading && products.length === 0 && !USE_MOCKS && (
+      {!productsQuery.isLoading && visibleProductCount === 0 && (
         <p className="p-10 text-center text-sm text-neutral-500">
-          현재 공개된 오퍼 상품이 없습니다.
+          선택한 카테고리의 오퍼 상품이 없습니다.
         </p>
       )}
     </div>
