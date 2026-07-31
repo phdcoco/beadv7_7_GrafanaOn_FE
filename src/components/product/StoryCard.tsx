@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { BookOpenText } from "lucide-react"
+import { BookOpenText, UsersRound } from "lucide-react"
 import { ProductScrapButton } from "@/components/product/ProductScrapButton"
 
 type StoryCardProps = {
@@ -7,9 +7,8 @@ type StoryCardProps = {
   writer: string
   title: string
   excerpt: string
-  offerCount: number
+  offerCount?: number
   image: string
-  horizontal?: boolean
 }
 
 export function StoryCard({
@@ -17,29 +16,30 @@ export function StoryCard({
   writer,
   title,
   excerpt,
+  offerCount,
   image,
-  horizontal = false,
 }: StoryCardProps) {
   const productPath = `/products/${productId}?saleType=OFFER`
 
   return (
-    <article
-      className={
-        horizontal
-          ? "grid w-[18rem] shrink-0 grid-cols-[104px_1fr] overflow-hidden rounded-lg border border-neutral-200 bg-white"
-          : "block overflow-hidden border-b border-neutral-200 bg-white sm:rounded-lg sm:border"
-      }
-    >
+    <article className="overflow-hidden border-y border-neutral-200 bg-white sm:rounded-lg sm:border">
+      <header className="flex h-14 items-center gap-3 px-4">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-black text-neutral-950">
+          {writer.slice(0, 1)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-bold">{writer}</p>
+          <p className="text-[11px] text-neutral-400">상품에 담긴 이야기</p>
+        </div>
+        <span className="text-[11px] font-bold text-brand">오퍼구매</span>
+      </header>
+
       <div className="relative">
         <Link to={productPath} aria-label={`${title} 상세 보기`}>
           <img
             src={image}
             alt={title}
-            className={
-              horizontal
-                ? "h-full min-h-48 w-full object-cover"
-                : "aspect-[16/10] w-full object-cover"
-            }
+            className="aspect-[4/5] w-full bg-neutral-100 object-cover"
           />
         </Link>
         <ProductScrapButton
@@ -49,25 +49,29 @@ export function StoryCard({
       </div>
       <Link
         to={productPath}
-        className={horizontal ? "flex min-w-0 flex-col p-3" : "block p-4"}
+        className="block px-4 pb-5 pt-4"
       >
-        <div className="flex items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-full bg-brand text-xs font-bold text-neutral-950">
-            {writer.slice(0, 1)}
-          </span>
-          <span className="text-xs font-semibold">{writer}님의 이야기</span>
-        </div>
-        <h3 className="mt-3 line-clamp-2 text-sm font-bold leading-5">{title}</h3>
-        <p className="mt-2 line-clamp-3 text-xs leading-5 text-neutral-500">
+        <h3 className="line-clamp-2 text-[15px] font-black leading-6">{title}</h3>
+        <p className="mt-1.5 line-clamp-4 text-sm leading-6 text-neutral-600">
+          <span className="mr-1.5 font-bold text-neutral-950">{writer}</span>
           {excerpt}
         </p>
-        <div className="mt-auto flex items-center justify-between pt-4 text-xs">
+        <div className="mt-4 flex items-center justify-between text-xs">
           <span className="flex items-center gap-1 text-neutral-500">
-            <BookOpenText className="size-3.5" />
-            상품 이야기
+            {offerCount ? (
+              <>
+                <UsersRound className="size-3.5" />
+                오퍼 {offerCount.toLocaleString()}건
+              </>
+            ) : (
+              <>
+                <BookOpenText className="size-3.5" />
+                상품 이야기
+              </>
+            )}
           </span>
-          <span className="font-semibold text-neutral-950 underline decoration-brand decoration-2 underline-offset-4">
-            이야기 읽기
+          <span className="font-bold text-brand">
+            이야기 더 보기
           </span>
         </div>
       </Link>

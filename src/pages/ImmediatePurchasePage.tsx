@@ -27,8 +27,12 @@ export function ImmediatePurchasePage() {
 
   return (
     <div>
-      <div className="sticky top-16 z-20 border-b border-neutral-200 bg-white md:top-[72px]">
-        <div className="no-scrollbar flex gap-5 overflow-x-auto bg-neutral-50 px-4 py-3 md:px-8">
+      <div className="sticky top-16 z-20 border-b border-neutral-100 bg-white px-5 py-4 md:top-[72px] md:px-8">
+        <h1 className="text-xl font-extrabold">즉시구매</h1>
+        <p className="mt-1 text-xs text-neutral-500">
+          기다림 없이, 마음에 든 상품을 바로 만나보세요.
+        </p>
+        <div className="-mx-5 mt-4 no-scrollbar flex gap-5 overflow-x-auto bg-neutral-50 px-5 py-3 md:-mx-8 md:px-8">
           {productCategoryOptions.map((item) => (
             <button
               key={item.value}
@@ -45,7 +49,7 @@ export function ImmediatePurchasePage() {
           ))}
         </div>
 
-        <div className="flex h-11 items-center justify-between px-4 text-xs text-neutral-500 md:px-8">
+        <div className="flex h-11 items-center justify-between text-xs text-neutral-500">
           <span>{products.length}개 상품</span>
           <select
             value={sort}

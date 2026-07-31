@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { getProducts } from "@/api/productApi"
-import { ProductCard } from "@/components/product/ProductCard"
+import { OfferFeedCard } from "@/components/product/OfferFeedCard"
 import { StoryCard } from "@/components/product/StoryCard"
 import {
   productCategoryOptions,
@@ -38,7 +38,7 @@ export function OfferPurchasePage() {
     : products.length
 
   return (
-    <div className="pb-6">
+    <div className="min-h-screen bg-neutral-50 pb-6">
       <div className="sticky top-16 z-20 border-b border-neutral-100 bg-white px-5 py-4 md:top-[72px] md:px-8">
         <h1 className="text-xl font-extrabold">오퍼구매</h1>
         <p className="mt-1 text-xs text-neutral-500">
@@ -79,11 +79,19 @@ export function OfferPurchasePage() {
       </div>
 
       {productsQuery.isLoading && (
-        <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-3 md:p-8">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="animate-pulse">
-              <div className="aspect-square rounded-lg bg-neutral-100" />
-              <div className="mt-3 h-4 bg-neutral-100" />
+        <div className="mx-auto max-w-[620px] space-y-4 py-4 sm:px-4">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div
+              key={index}
+              className="overflow-hidden border-y border-neutral-200 bg-white sm:rounded-lg sm:border"
+            >
+              <div className="h-14 animate-pulse bg-neutral-50" />
+              <div className="aspect-[4/5] animate-pulse bg-neutral-100" />
+              <div className="space-y-2 p-4">
+                <div className="h-4 w-2/3 bg-neutral-100" />
+                <div className="h-3 w-full bg-neutral-100" />
+                <div className="h-3 w-4/5 bg-neutral-100" />
+              </div>
             </div>
           ))}
         </div>
@@ -96,15 +104,15 @@ export function OfferPurchasePage() {
       )}
 
       {USE_MOCKS ? (
-        <div className="grid md:grid-cols-2 md:gap-4 md:p-8 lg:grid-cols-3">
+        <div className="mx-auto max-w-[620px] space-y-4 py-4 sm:px-4">
           {visibleStories.map((story) => (
             <StoryCard key={story.productId} {...story} />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-x-3 gap-y-7 px-4 py-5 sm:grid-cols-3 md:px-8 lg:grid-cols-4">
+        <div className="mx-auto max-w-[620px] space-y-4 py-4 sm:px-4">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} compact />
+            <OfferFeedCard key={product.id} product={product} />
           ))}
         </div>
       )}

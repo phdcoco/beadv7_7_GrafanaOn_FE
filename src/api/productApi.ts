@@ -265,7 +265,9 @@ function applyProductListOptions(
       !params?.saleType || product.saleType === params.saleType
     const matchesStatus = !params?.status || product.status === params.status
     const matchesCategory =
-      !params?.category || product.category === params.category
+      !params?.category ||
+      !product.category ||
+      product.category === params.category
 
     return matchesSaleType && matchesStatus && matchesCategory
   })
