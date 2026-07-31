@@ -12,6 +12,7 @@ import { ProductSearchPage } from "@/pages/ProductSearchPage"
 import { ProfilePage } from "@/pages/ProfilePage"
 import { SignUpPage } from "@/pages/SignUpPage"
 import { SellerRegistrationPage } from "@/pages/SellerRegistrationPage"
+import { SellerOffersPage } from "@/pages/SellerOffersPage"
 
 export const router = createBrowserRouter([
   {
@@ -81,6 +82,10 @@ export const router = createBrowserRouter([
       {
         path: "/seller/register",
         element: <SellerRegistrationPage />,
+      },
+      {
+        path: "/seller/products/:productId/offers",
+        element: <SellerOffersPage />,
       },
       {
         path: "/sell/products/new",

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import {
   ArrowRight,
   Eye,
+  Inbox,
   LoaderCircle,
   Plus,
   ReceiptText,
@@ -281,6 +282,15 @@ export function SellerSection() {
                     </span>
                   </div>
                 </Link>
+                {product.saleType === "OFFER" && (
+                  <Link
+                    to={`/seller/products/${product.id}/offers`}
+                    className="mt-3 flex h-9 items-center justify-center gap-1.5 rounded-md border border-brand text-xs font-black text-brand"
+                  >
+                    <Inbox className="size-3.5" />
+                    받은 오퍼
+                  </Link>
+                )}
               </article>
             )
           })}

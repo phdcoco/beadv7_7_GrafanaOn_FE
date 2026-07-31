@@ -108,7 +108,25 @@ export async function getMySellerProducts(): Promise<SellerProduct[]> {
   const { data } = await apiClient.get<ApiResponse<SellerProduct[]>>(
     "/api/products/me"
   )
-  return unwrapData(data)
+  const sellerProducts = unwrapData(data)
+
+  if (sellerProducts.every((product) => product.saleType)) {
+    return sellerProducts
+  }
+
+  try {
+    const products = await getProducts()
+    const saleTypeByProductId = new Map(
+      products.map((product) => [product.id, product.saleType])
+    )
+
+    return sellerProducts.map((product) => ({
+      ...product,
+      saleType: product.saleType ?? saleTypeByProductId.get(product.id),
+    }))
+  } catch {
+    return sellerProducts
+  }
 }
 
 export async function deleteProduct(productId: number) {
