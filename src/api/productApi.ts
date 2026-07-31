@@ -93,11 +93,13 @@ export async function getProductDetail(
     `/api/products/${productId}`
   )
   const product = unwrapData(data)
+  const resolvedSaleType =
+    product.saleType ?? saleType ?? (await findProductSaleType(productId))
 
   return {
     ...product,
     productId,
-    saleType: product.saleType ?? saleType,
+    saleType: resolvedSaleType,
   }
 }
 
@@ -246,4 +248,13 @@ function getUploadContentType(file: File) {
   }
 
   return "image/jpeg"
+}
+
+async function findProductSaleType(productId: number) {
+  try {
+    const products = await getProducts()
+    return products.find((product) => product.id === productId)?.saleType
+  } catch {
+    return undefined
+  }
 }
