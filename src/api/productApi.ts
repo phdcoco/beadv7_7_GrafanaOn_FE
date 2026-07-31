@@ -55,6 +55,7 @@ export async function getProducts(params?: GetProductsParams) {
     saleType: params?.saleType,
     status: params?.status,
     createdAt: params?.createdAt,
+    category: params?.category,
   }
   const { data } = await apiClient.get<ApiResponse<ProductSummary[]>>(
     "/api/products",
