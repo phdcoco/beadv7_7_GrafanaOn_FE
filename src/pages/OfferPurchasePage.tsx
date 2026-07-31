@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Flame, Sparkles } from "lucide-react"
 import { getProducts } from "@/api/productApi"
 import { ProductCard } from "@/components/product/ProductCard"
 import { StoryCard } from "@/components/product/StoryCard"
@@ -10,34 +9,26 @@ import {
 } from "@/constants/productCategories"
 import { offerStories } from "@/data/mockProducts"
 import { USE_MOCKS } from "@/lib/runtime"
-
-const filters = [
-  { label: "새로운 이야기", icon: Sparkles },
-  { label: "많이 보는 이야기", icon: Flame },
-]
+import type { ProductListSort } from "@/types/product"
 
 export function OfferPurchasePage() {
-  const [selectedFilter, setSelectedFilter] = useState(filters[0].label)
   const [category, setCategory] = useState<ProductCategoryFilter>("ALL")
+  const [sort, setSort] = useState<ProductListSort>("DEFAULT")
   const productsQuery = useQuery({
-    queryKey: ["products", "OFFER", "feed", category],
+    queryKey: ["products", "OFFER", "feed", category, sort],
     queryFn: () =>
       getProducts({
         saleType: "OFFER",
         status: "ON_SALE",
         category: category === "ALL" ? undefined : category,
+        sort,
       }),
   })
 
-  const products = useMemo(() => {
-    const items = [...(productsQuery.data ?? [])]
-
-    if (selectedFilter === "많이 보는 이야기") {
-      return items.sort((a, b) => b.viewCount - a.viewCount)
-    }
-
-    return items
-  }, [productsQuery.data, selectedFilter])
+  const products = useMemo(
+    () => productsQuery.data ?? [],
+    [productsQuery.data]
+  )
   const visibleStories = useMemo(() => {
     const productIds = new Set(products.map((product) => product.id))
     return offerStories.filter((story) => productIds.has(story.productId))
@@ -53,23 +44,6 @@ export function OfferPurchasePage() {
         <p className="mt-1 text-xs text-neutral-500">
           가격보다 먼저, 이 신발이 지나온 시간을 읽어보세요.
         </p>
-        <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto">
-          {filters.map((filter) => (
-            <button
-              key={filter.label}
-              type="button"
-              className={`flex h-10 shrink-0 items-center gap-2 rounded-md border px-3 text-xs font-semibold ${
-                selectedFilter === filter.label
-                  ? "border-brand bg-brand text-neutral-950"
-                  : "border-neutral-200 bg-white text-neutral-600"
-              }`}
-              onClick={() => setSelectedFilter(filter.label)}
-            >
-              <filter.icon className="size-4" />
-              {filter.label}
-            </button>
-          ))}
-        </div>
         <div className="-mx-5 mt-4 no-scrollbar flex gap-5 overflow-x-auto bg-neutral-50 px-5 py-3 md:-mx-8 md:px-8">
           {productCategoryOptions.map((item) => (
             <button
@@ -85,6 +59,22 @@ export function OfferPurchasePage() {
               {item.label}
             </button>
           ))}
+        </div>
+        <div className="flex h-11 items-center justify-between">
+          <span className="text-xs text-neutral-500">
+            {visibleProductCount}개 상품
+          </span>
+          <select
+            value={sort}
+            onChange={(event) => setSort(event.target.value as ProductListSort)}
+            className="bg-white text-xs font-bold text-neutral-700 outline-none"
+            aria-label="상품 정렬"
+          >
+            <option value="DEFAULT">기본순</option>
+            <option value="VIEW_COUNT">조회수 높은 순</option>
+            <option value="PRICE_ASC">가격 낮은 순</option>
+            <option value="PRICE_DESC">가격 높은 순</option>
+          </select>
         </div>
       </div>
 

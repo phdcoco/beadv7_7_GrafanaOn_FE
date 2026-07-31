@@ -1,5 +1,7 @@
 export type ProductSearchSort = "LATEST" | "VIEW_COUNT" | "PRICE_ASC" | "PRICE_DESC"
 
+export type ProductListSort = "DEFAULT" | "VIEW_COUNT" | "PRICE_ASC" | "PRICE_DESC"
+
 export type ProductSearchType = "PRODUCT_NAME" | "CATEGORY" | "STORY_CONTENT"
 
 export type ProductSaleType = "IMMEDIATE" | "OFFER"
@@ -73,6 +75,7 @@ export type GetProductsParams = {
   status?: ProductStatus
   category?: ProductCategory
   createdAt?: string
+  sort?: ProductListSort
 }
 
 export type UploadFileType = "JPG" | "JPEG" | "PNG" | "WEBP"

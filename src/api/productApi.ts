@@ -48,23 +48,20 @@ export async function getProducts(params?: GetProductsParams) {
       })
     )
 
-    return [...mockProducts, ...createdProducts].filter((product) => {
-      const matchesSaleType =
-        !params?.saleType || product.saleType === params.saleType
-      const matchesStatus = !params?.status || product.status === params.status
-      const matchesCategory =
-        !params?.category || product.category === params.category
-
-      return matchesSaleType && matchesStatus && matchesCategory
-    })
+    return applyProductListOptions([...mockProducts, ...createdProducts], params)
   }
 
+  const requestParams = {
+    saleType: params?.saleType,
+    status: params?.status,
+    createdAt: params?.createdAt,
+  }
   const { data } = await apiClient.get<ApiResponse<ProductSummary[]>>(
     "/api/products",
-    { params }
+    { params: requestParams }
   )
 
-  return unwrapData(data)
+  return applyProductListOptions(unwrapData(data), params)
 }
 
 export async function getProductDetail(
@@ -257,4 +254,32 @@ async function findProductSaleType(productId: number) {
   } catch {
     return undefined
   }
+}
+
+function applyProductListOptions(
+  products: ProductSummary[],
+  params?: GetProductsParams
+) {
+  const filteredProducts = products.filter((product) => {
+    const matchesSaleType =
+      !params?.saleType || product.saleType === params.saleType
+    const matchesStatus = !params?.status || product.status === params.status
+    const matchesCategory =
+      !params?.category || product.category === params.category
+
+    return matchesSaleType && matchesStatus && matchesCategory
+  })
+
+  return filteredProducts.sort((left, right) => {
+    switch (params?.sort) {
+      case "VIEW_COUNT":
+        return right.viewCount - left.viewCount
+      case "PRICE_ASC":
+        return left.price - right.price
+      case "PRICE_DESC":
+        return right.price - left.price
+      default:
+        return 0
+    }
+  })
 }
