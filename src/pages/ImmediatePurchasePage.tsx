@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { getProducts } from "@/api/productApi"
+import { getProductsPage } from "@/api/productApi"
 import { ProductCard } from "@/components/product/ProductCard"
+import { PaginationNav } from "@/components/ui/PaginationNav"
 import {
   productCategoryOptions,
   type ProductCategoryFilter,
@@ -11,19 +12,27 @@ import type { ProductListSort } from "@/types/product"
 export function ImmediatePurchasePage() {
   const [category, setCategory] = useState<ProductCategoryFilter>("ALL")
   const [sort, setSort] = useState<ProductListSort>("DEFAULT")
+  const [page, setPage] = useState(1)
 
   const productsQuery = useQuery({
-    queryKey: ["products", "IMMEDIATE", "grid", category, sort],
+    queryKey: ["products", "IMMEDIATE", "grid", category, sort, page],
     queryFn: () =>
-      getProducts({
+      getProductsPage({
         saleType: "IMMEDIATE",
         status: "ON_SALE",
         category: category === "ALL" ? undefined : category,
         sort,
+        page,
+        size: 20,
       }),
   })
 
-  const products = productsQuery.data ?? []
+  const products = productsQuery.data?.content ?? []
+
+  function changePage(nextPage: number) {
+    setPage(nextPage)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
 
   return (
     <div>
@@ -42,7 +51,10 @@ export function ImmediatePurchasePage() {
                   ? "font-extrabold text-neutral-950 underline decoration-brand decoration-2 underline-offset-4"
                   : "font-medium text-neutral-500"
               }`}
-              onClick={() => setCategory(item.value)}
+              onClick={() => {
+                setCategory(item.value)
+                setPage(1)
+              }}
             >
               {item.label}
             </button>
@@ -50,10 +62,13 @@ export function ImmediatePurchasePage() {
         </div>
 
         <div className="flex h-11 items-center justify-between text-xs text-neutral-500">
-          <span>{products.length}개 상품</span>
+          <span>{productsQuery.data?.pagination.totalItems ?? 0}개 상품</span>
           <select
             value={sort}
-            onChange={(event) => setSort(event.target.value as ProductListSort)}
+            onChange={(event) => {
+              setSort(event.target.value as ProductListSort)
+              setPage(1)
+            }}
             className="bg-white text-xs font-bold text-neutral-700 outline-none"
             aria-label="상품 정렬"
           >
@@ -83,6 +98,14 @@ export function ImmediatePurchasePage() {
         <p className="p-10 text-center text-sm text-neutral-500">
           선택한 카테고리의 즉시구매 상품이 없습니다.
         </p>
+      )}
+
+      {productsQuery.data && (
+        <PaginationNav
+          pagination={productsQuery.data.pagination}
+          label="즉시구매 상품 페이지"
+          onPageChange={changePage}
+        />
       )}
     </div>
   )

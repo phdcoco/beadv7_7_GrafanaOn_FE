@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { getProducts } from "@/api/productApi"
+import { getProductsPage } from "@/api/productApi"
 import { OfferFeedCard } from "@/components/product/OfferFeedCard"
 import { StoryCard } from "@/components/product/StoryCard"
+import { PaginationNav } from "@/components/ui/PaginationNav"
 import {
   productCategoryOptions,
   type ProductCategoryFilter,
@@ -14,19 +15,22 @@ import type { ProductListSort } from "@/types/product"
 export function OfferPurchasePage() {
   const [category, setCategory] = useState<ProductCategoryFilter>("ALL")
   const [sort, setSort] = useState<ProductListSort>("DEFAULT")
+  const [page, setPage] = useState(1)
   const productsQuery = useQuery({
-    queryKey: ["products", "OFFER", "feed", category, sort],
+    queryKey: ["products", "OFFER", "feed", category, sort, page],
     queryFn: () =>
-      getProducts({
+      getProductsPage({
         saleType: "OFFER",
         status: "ON_SALE",
         category: category === "ALL" ? undefined : category,
         sort,
+        page,
+        size: 20,
       }),
   })
 
   const products = useMemo(
-    () => productsQuery.data ?? [],
+    () => productsQuery.data?.content ?? [],
     [productsQuery.data]
   )
   const visibleStories = useMemo(() => {
@@ -35,7 +39,12 @@ export function OfferPurchasePage() {
   }, [products])
   const visibleProductCount = USE_MOCKS
     ? visibleStories.length
-    : products.length
+    : productsQuery.data?.pagination.totalItems ?? 0
+
+  function changePage(nextPage: number) {
+    setPage(nextPage)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50 pb-6">
@@ -54,7 +63,10 @@ export function OfferPurchasePage() {
                   ? "font-extrabold text-neutral-950 underline decoration-brand decoration-2 underline-offset-4"
                   : "font-medium text-neutral-500"
               }`}
-              onClick={() => setCategory(item.value)}
+              onClick={() => {
+                setCategory(item.value)
+                setPage(1)
+              }}
             >
               {item.label}
             </button>
@@ -66,7 +78,10 @@ export function OfferPurchasePage() {
           </span>
           <select
             value={sort}
-            onChange={(event) => setSort(event.target.value as ProductListSort)}
+            onChange={(event) => {
+              setSort(event.target.value as ProductListSort)
+              setPage(1)
+            }}
             className="bg-white text-xs font-bold text-neutral-700 outline-none"
             aria-label="상품 정렬"
           >
@@ -121,6 +136,14 @@ export function OfferPurchasePage() {
         <p className="p-10 text-center text-sm text-neutral-500">
           선택한 카테고리의 오퍼 상품이 없습니다.
         </p>
+      )}
+
+      {productsQuery.data && (
+        <PaginationNav
+          pagination={productsQuery.data.pagination}
+          label="오퍼구매 상품 페이지"
+          onPageChange={changePage}
+        />
       )}
     </div>
   )
