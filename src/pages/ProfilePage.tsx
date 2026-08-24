@@ -53,8 +53,8 @@ export function ProfilePage() {
   })
 
   const scrapQuery = useQuery({
-    queryKey: ["scraps", "me", 0],
-    queryFn: () => getScraps(0, 6),
+    queryKey: ["scraps", "me", 1],
+    queryFn: () => getScraps(1, 6),
     enabled: loggedIn,
   })
 
@@ -129,7 +129,7 @@ export function ProfilePage() {
 
   const profile = profileQuery.data
   const purchases = purchaseQuery.data ?? []
-  const scraps = scrapQuery.data?.scrapList ?? []
+  const scraps = scrapQuery.data?.content ?? []
 
   return (
     <div className="pb-10">
@@ -237,7 +237,11 @@ export function ProfilePage() {
         />
         <Status
           label="관심 상품"
-          value={scrapQuery.isLoading ? "-" : String(scrapQuery.data?.totalElements ?? 0)}
+          value={
+            scrapQuery.isLoading
+              ? "-"
+              : String(scrapQuery.data?.pagination.totalItems ?? 0)
+          }
         />
       </section>
 
@@ -278,7 +282,7 @@ export function ProfilePage() {
             <h2 className="text-base font-black">관심 상품</h2>
           </div>
           <span className="text-xs text-neutral-400">
-            {scrapQuery.data?.totalElements ?? 0}개
+            {scrapQuery.data?.pagination.totalItems ?? 0}개
           </span>
         </div>
 

@@ -1,9 +1,13 @@
 import { apiClient } from "@/lib/apiClient"
-import { unwrapData } from "@/lib/apiResponse"
+import {
+  createPageResponse,
+  normalizePageResponse,
+  unwrapData,
+} from "@/lib/apiResponse"
 import { mockProducts } from "@/data/mockProducts"
 import { USE_MOCKS } from "@/lib/runtime"
-import type { ApiResponse } from "@/types/api"
-import type { Scrap, ScrapPage } from "@/types/scrap"
+import type { ApiResponse, PageResponse } from "@/types/api"
+import type { Scrap, ScrapListItem, ScrapPage } from "@/types/scrap"
 
 const mockScrapIds = new Set(mockProducts.slice(0, 3).map((product) => product.id))
 
@@ -28,7 +32,7 @@ export async function deleteScrap(productId: number) {
   await apiClient.delete<ApiResponse<void>>(`/api/scraps/${productId}`)
 }
 
-export async function getScraps(page = 0, size = 10) {
+export async function getScraps(page = 1, size = 10): Promise<ScrapPage> {
   if (USE_MOCKS) {
     const allScraps = mockProducts
       .filter((product) => mockScrapIds.has(product.id))
@@ -40,21 +44,37 @@ export async function getScraps(page = 0, size = 10) {
         imageUrl: product.url,
         status: product.status,
       }))
-    const start = page * size
-    const scrapList = allScraps.slice(start, start + size)
-
-    return {
-      scrapList,
+    const start = (page - 1) * size
+    return createPageResponse(
+      allScraps.slice(start, start + size),
       page,
       size,
-      totalElements: allScraps.length,
-      totalPages: Math.ceil(allScraps.length / size),
-      hasNext: start + size < allScraps.length,
-    }
+      allScraps.length
+    )
   }
 
-  const { data } = await apiClient.get<ApiResponse<ScrapPage>>("/api/scraps", {
-    params: { page, size },
-  })
-  return unwrapData(data)
+  const { data } = await apiClient.get<ApiResponse<PageResponse<ScrapListItem>>>(
+    "/api/scraps",
+    { params: { page, size } }
+  )
+  return normalizePageResponse(unwrapData(data))
+}
+
+export async function getAllScraps() {
+  const firstPage = await getScraps(1, 20)
+  const scraps = [...firstPage.content]
+  let currentPage = firstPage
+
+  while (
+    currentPage.pagination.hasNext &&
+    currentPage.pagination.currentPage < 50
+  ) {
+    currentPage = await getScraps(
+      currentPage.pagination.currentPage + 1,
+      20
+    )
+    scraps.push(...currentPage.content)
+  }
+
+  return scraps
 }

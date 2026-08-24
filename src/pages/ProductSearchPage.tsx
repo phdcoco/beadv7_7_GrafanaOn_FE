@@ -1,6 +1,14 @@
 import { type FormEvent, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowLeft, ImageOff, Search, SlidersHorizontal, X } from "lucide-react"
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  ImageOff,
+  Search,
+  SlidersHorizontal,
+  X,
+} from "lucide-react"
 import { Link } from "react-router-dom"
 import { searchProducts } from "@/api/searchApi"
 import { formatPrice } from "@/lib/format"
@@ -25,15 +33,16 @@ export function ProductSearchPage() {
   const [keyword, setKeyword] = useState("")
   const [type, setType] = useState<ProductSearchType>("PRODUCT_NAME")
   const [sort, setSort] = useState<ProductSearchSort>("LATEST")
+  const [page, setPage] = useState(1)
 
   const productsQuery = useQuery({
-    queryKey: ["search-products", keyword, type, sort],
+    queryKey: ["search-products", keyword, type, sort, page],
     queryFn: () =>
       searchProducts({
         keyword,
         type,
         sort,
-        page: 1,
+        page,
         size: 20,
       }),
     enabled: keyword.length > 0,
@@ -42,6 +51,7 @@ export function ProductSearchPage() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setKeyword(keywordInput.trim())
+    setPage(1)
   }
 
   return (
@@ -94,7 +104,10 @@ export function ProductSearchPage() {
                   ? "bg-brand text-neutral-950"
                   : "bg-neutral-100 text-neutral-600"
               }`}
-              onClick={() => setType(item.value)}
+              onClick={() => {
+                setType(item.value)
+                setPage(1)
+              }}
             >
               {item.label}
             </button>
@@ -105,7 +118,7 @@ export function ProductSearchPage() {
       <div className="flex h-12 items-center justify-between border-b border-neutral-100 px-5 text-xs md:px-8">
         <span className="text-neutral-500">
           {keyword
-            ? `"${keyword}" 검색 결과 ${productsQuery.data?.totalElements ?? 0}개`
+            ? `"${keyword}" 검색 결과 ${productsQuery.data?.pagination.totalItems ?? 0}개`
             : "찾고 싶은 상품을 검색해 보세요"}
         </span>
         <label className="flex items-center gap-2 font-semibold">
@@ -113,9 +126,10 @@ export function ProductSearchPage() {
           <select
             value={sort}
             className="bg-transparent outline-none"
-            onChange={(event) =>
+            onChange={(event) => {
               setSort(event.target.value as ProductSearchSort)
-            }
+              setPage(1)
+            }}
           >
             {searchSorts.map((item) => (
               <option key={item.value} value={item.value}>
@@ -214,6 +228,36 @@ export function ProductSearchPage() {
           검색 결과가 없습니다.
         </div>
       )}
+
+      {productsQuery.data &&
+        productsQuery.data.pagination.totalPages > 1 && (
+          <nav
+            className="flex items-center justify-center gap-3 border-t border-neutral-100 px-5 py-6"
+            aria-label="검색 결과 페이지"
+          >
+            <button
+              type="button"
+              className="flex size-10 items-center justify-center rounded-md border border-neutral-200 disabled:text-neutral-300"
+              disabled={!productsQuery.data.pagination.hasPrevious}
+              aria-label="이전 페이지"
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            <span className="min-w-16 text-center text-xs font-bold">
+              {productsQuery.data.pagination.currentPage} / {productsQuery.data.pagination.totalPages}
+            </span>
+            <button
+              type="button"
+              className="flex size-10 items-center justify-center rounded-md border border-neutral-200 disabled:text-neutral-300"
+              disabled={!productsQuery.data.pagination.hasNext}
+              aria-label="다음 페이지"
+              onClick={() => setPage((current) => current + 1)}
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </nav>
+        )}
     </div>
   )
 }

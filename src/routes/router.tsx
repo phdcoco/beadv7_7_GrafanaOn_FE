@@ -3,6 +3,7 @@ import { AppLayout } from "@/components/layout/AppLayout"
 import { CartPage } from "@/pages/CartPage"
 import { CheckoutPage } from "@/pages/CheckoutPage"
 import { LoginPage } from "@/pages/LoginPage"
+import { OAuthCallbackPage } from "@/pages/OAuthCallbackPage"
 import { ImmediatePurchasePage } from "@/pages/ImmediatePurchasePage"
 import { OfferPurchasePage } from "@/pages/OfferPurchasePage"
 import { ProductDetailPage } from "@/pages/ProductDetailPage"
@@ -99,6 +100,10 @@ export const router = createBrowserRouter([
       {
         path: "/login",
         element: <LoginPage />,
+      },
+      {
+        path: "/oauth/callback",
+        element: <OAuthCallbackPage />,
       },
       {
         path: "/signup",

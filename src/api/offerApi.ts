@@ -1,7 +1,7 @@
 import { apiClient } from "@/lib/apiClient"
-import { unwrapData } from "@/lib/apiResponse"
+import { normalizePageResponse, unwrapData } from "@/lib/apiResponse"
 import { USE_MOCKS } from "@/lib/runtime"
-import type { ApiResponse } from "@/types/api"
+import type { ApiResponse, PageResponse } from "@/types/api"
 import type {
   CreateOfferRequest,
   Offer,
@@ -62,11 +62,33 @@ export async function getOffersByProduct(
       : offers
   }
 
-  const { data } = await apiClient.get<ApiResponse<Offer[]>>(
+  const { data } = await apiClient.get<ApiResponse<PageResponse<Offer>>>(
     `/api/offers/products/${productId}`,
-    { params: { statuses: statuses?.join(",") } }
+    { params: { statuses: statuses?.join(","), page: 1, size: 20 } }
   )
-  return unwrapData(data)
+  const firstPage = normalizePageResponse(unwrapData(data))
+  const offers = [...firstPage.content]
+  let currentPage = firstPage
+
+  while (
+    currentPage.pagination.hasNext &&
+    currentPage.pagination.currentPage < 50
+  ) {
+    const response = await apiClient.get<ApiResponse<PageResponse<Offer>>>(
+      `/api/offers/products/${productId}`,
+      {
+        params: {
+          statuses: statuses?.join(","),
+          page: currentPage.pagination.currentPage + 1,
+          size: 20,
+        },
+      }
+    )
+    currentPage = normalizePageResponse(unwrapData(response.data))
+    offers.push(...currentPage.content)
+  }
+
+  return offers
 }
 
 export async function getOffer(offerId: number) {

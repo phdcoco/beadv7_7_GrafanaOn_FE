@@ -13,6 +13,7 @@ import {
   UserRoundX,
 } from "lucide-react"
 import { getSellerAccount, unregisterSeller } from "@/api/memberApi"
+import { reissueToken } from "@/api/authApi"
 import { deleteProduct, getMySellerProducts } from "@/api/productApi"
 import { getSettlementPreview } from "@/api/settlementApi"
 import { getApiErrorMessage } from "@/lib/apiClient"
@@ -22,12 +23,14 @@ import type { ProductStatus, SellerProduct } from "@/types/product"
 const statusLabels: Record<ProductStatus, string> = {
   PREPARING: "공개 예정",
   ON_SALE: "판매 중",
+  TRADING: "거래 중",
   SOLD_OUT: "판매 완료",
+  DELETED: "삭제됨",
 }
 
 export function SellerSection() {
   const queryClient = useQueryClient()
-  const settlementMonth = getNextSettlementMonth()
+  const settlementMonth = getSettlementPeriod()
   const sellerQuery = useQuery({
     queryKey: ["seller-account", "me"],
     queryFn: getSellerAccount,
@@ -63,6 +66,7 @@ export function SellerSection() {
   const unregisterMutation = useMutation({
     mutationFn: unregisterSeller,
     onSuccess: () => {
+      void reissueToken().catch(() => undefined)
       queryClient.setQueryData(["seller-account", "me"], null)
       queryClient.removeQueries({ queryKey: ["seller-products", "me"] })
     },
@@ -111,7 +115,9 @@ export function SellerSection() {
   const products = productsQuery.data ?? []
   const hasActiveProducts = products.some(
     (product) =>
-      product.status === "PREPARING" || product.status === "ON_SALE"
+      product.status === "PREPARING" ||
+      product.status === "ON_SALE" ||
+      product.status === "TRADING"
   )
 
   function handleDeleteProduct(product: SellerProduct) {
@@ -192,7 +198,7 @@ export function SellerSection() {
             </p>
           </div>
           <p className="mt-1 text-[11px] text-neutral-400">
-            매월 1일 오전 5시 · 수수료 제외
+            매일 오전 1시 반영 · 수수료 제외
           </p>
         </div>
         <div className="text-right">
@@ -295,7 +301,8 @@ export function SellerSection() {
                   <span className="absolute left-2 top-2 rounded bg-neutral-950/80 px-2 py-1 text-[10px] font-bold text-white">
                     {statusLabels[product.status]}
                   </span>
-                  {product.status !== "SOLD_OUT" && (
+                  {(product.status === "PREPARING" ||
+                    product.status === "ON_SALE") && (
                     <button
                       type="button"
                       className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-white/95 text-red-600 shadow-sm transition hover:bg-white disabled:text-neutral-300"
@@ -328,7 +335,8 @@ export function SellerSection() {
                     </span>
                   </div>
                 </Link>
-                {product.saleType === "OFFER" && (
+                {product.saleType === "OFFER" &&
+                  product.status !== "DELETED" && (
                   <Link
                     to={`/seller/products/${product.id}/offers`}
                     className="mt-3 flex h-9 items-center justify-center gap-1.5 rounded-md border border-brand text-xs font-black text-brand"
@@ -346,20 +354,19 @@ export function SellerSection() {
   )
 }
 
-function getNextSettlementMonth() {
+function getSettlementPeriod() {
   const now = new Date()
-  const beforeCurrentMonthPayout =
-    now.getDate() === 1 && now.getHours() < 5
   const payoutDate = new Date(
     now.getFullYear(),
-    now.getMonth() + (beforeCurrentMonthPayout ? 0 : 1),
+    now.getMonth() + 1,
     1
   )
-  const year = payoutDate.getFullYear()
-  const month = payoutDate.getMonth() + 1
+  const periodYear = now.getFullYear()
+  const periodMonth = now.getMonth() + 1
+  const payoutMonth = payoutDate.getMonth() + 1
 
   return {
-    value: `${year}-${String(month).padStart(2, "0")}`,
-    label: `${month}월 1일`,
+    value: `${periodYear}-${String(periodMonth).padStart(2, "0")}`,
+    label: `${payoutMonth}월 1일`,
   }
 }

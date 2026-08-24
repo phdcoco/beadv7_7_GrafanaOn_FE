@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/apiClient"
+import { apiClient, getApiUrl } from "@/lib/apiClient"
 import { clearAccessToken, setAccessToken } from "@/lib/authStorage"
 import { unwrapData } from "@/lib/apiResponse"
 import { USE_MOCKS } from "@/lib/runtime"
@@ -9,6 +9,9 @@ import type {
   SignUpResponse,
   TokenResponse,
 } from "@/types/auth"
+
+const GOOGLE_OAUTH_PENDING_KEY = "dear-google-oauth-pending"
+const GOOGLE_OAUTH_REDIRECT_KEY = "dear-google-oauth-redirect"
 
 export async function login(request: LoginRequest) {
   if (USE_MOCKS) {
@@ -93,4 +96,26 @@ export async function withdraw() {
 
   await apiClient.delete<ApiResponse<void>>("/api/auth/withdraw")
   clearAccessToken()
+}
+
+export function startGoogleLogin(redirect = "/") {
+  sessionStorage.setItem(GOOGLE_OAUTH_PENDING_KEY, "true")
+  sessionStorage.setItem(
+    GOOGLE_OAUTH_REDIRECT_KEY,
+    redirect.startsWith("/") ? redirect : "/"
+  )
+  window.location.assign(
+    getApiUrl("/api/auth/oauth2/authorization/google")
+  )
+}
+
+export function isGoogleLoginPending() {
+  return sessionStorage.getItem(GOOGLE_OAUTH_PENDING_KEY) === "true"
+}
+
+export function consumeGoogleLoginRedirect() {
+  const redirect = sessionStorage.getItem(GOOGLE_OAUTH_REDIRECT_KEY) ?? "/"
+  sessionStorage.removeItem(GOOGLE_OAUTH_PENDING_KEY)
+  sessionStorage.removeItem(GOOGLE_OAUTH_REDIRECT_KEY)
+  return redirect.startsWith("/") ? redirect : "/"
 }

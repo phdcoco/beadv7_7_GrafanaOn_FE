@@ -1,3 +1,5 @@
+import type { PageResponse } from "@/types/api"
+
 export type Scrap = {
   productId: number
 }
@@ -11,11 +13,4 @@ export type ScrapListItem = {
   status: string
 }
 
-export type ScrapPage = {
-  scrapList: ScrapListItem[]
-  page: number
-  size: number
-  totalElements: number
-  totalPages: number
-  hasNext: boolean
-}
+export type ScrapPage = PageResponse<ScrapListItem>

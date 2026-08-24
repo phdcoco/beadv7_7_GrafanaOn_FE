@@ -1,8 +1,14 @@
-import { type FormEvent, useState } from "react"
+import { type FormEvent, useEffect, useRef, useState } from "react"
 import { useMutation } from "@tanstack/react-query"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowRight, LockKeyhole, Mail } from "lucide-react"
-import { login } from "@/api/authApi"
+import {
+  consumeGoogleLoginRedirect,
+  isGoogleLoginPending,
+  login,
+  reissueToken,
+  startGoogleLogin,
+} from "@/api/authApi"
 import { BrandWordmark } from "@/components/brand/Brand"
 import { getApiErrorMessage } from "@/lib/apiClient"
 
@@ -11,6 +17,25 @@ export function LoginPage() {
   const [searchParams] = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [oauthCompleting, setOauthCompleting] = useState(false)
+  const [oauthError, setOauthError] = useState("")
+  const oauthAttempted = useRef(false)
+
+  useEffect(() => {
+    if (!isGoogleLoginPending() || oauthAttempted.current) {
+      return
+    }
+
+    oauthAttempted.current = true
+    setOauthCompleting(true)
+    reissueToken()
+      .then(() => navigate(consumeGoogleLoginRedirect(), { replace: true }))
+      .catch((error) => {
+        consumeGoogleLoginRedirect()
+        setOauthError(getApiErrorMessage(error))
+        setOauthCompleting(false)
+      })
+  }, [navigate])
 
   const loginMutation = useMutation({
     mutationFn: login,
@@ -95,6 +120,31 @@ export function LoginPage() {
               {!loginMutation.isPending && <ArrowRight className="size-4" />}
             </button>
           </form>
+
+          <div className="my-6 flex items-center gap-3 text-[11px] font-bold text-neutral-400">
+            <span className="h-px flex-1 bg-neutral-200" />
+            또는
+            <span className="h-px flex-1 bg-neutral-200" />
+          </div>
+
+          {oauthError && (
+            <p className="mb-3 text-sm text-red-600">{oauthError}</p>
+          )}
+
+          <button
+            type="button"
+            className="flex h-12 w-full items-center justify-center gap-3 rounded-md border border-neutral-300 bg-white text-sm font-bold hover:bg-neutral-50 disabled:text-neutral-400"
+            disabled={oauthCompleting}
+            onClick={() => {
+              const redirect = searchParams.get("redirect")
+              startGoogleLogin(redirect?.startsWith("/") ? redirect : "/")
+            }}
+          >
+            <span className="flex size-5 items-center justify-center rounded-full border border-neutral-300 text-xs font-black">
+              G
+            </span>
+            {oauthCompleting ? "Google 로그인 확인 중..." : "Google로 계속하기"}
+          </button>
 
           <p className="mt-6 text-center text-sm text-neutral-500">
             아직 회원이 아닌가요?{" "}

@@ -1,5 +1,9 @@
 import { apiClient } from "@/lib/apiClient"
-import { unwrapData } from "@/lib/apiResponse"
+import {
+  createPageResponse,
+  normalizePageResponse,
+  unwrapData,
+} from "@/lib/apiResponse"
 import { USE_MOCKS } from "@/lib/runtime"
 import { mockProducts } from "@/data/mockProducts"
 import { getProducts } from "@/api/productApi"
@@ -69,17 +73,12 @@ export async function searchProducts(params: SearchProductsParams) {
       imageUrl: product.url,
     }))
 
-    return {
+    return createPageResponse(
       content,
-      number: 0,
-      page: 1,
-      size: params.size ?? 20,
-      totalElements: content.length,
-      totalPages: content.length > 0 ? 1 : 0,
-      first: true,
-      last: true,
-      empty: content.length === 0,
-    }
+      params.page ?? 1,
+      params.size ?? 20,
+      content.length
+    )
   }
 
   if (params.type !== "STORY_CONTENT") {
@@ -91,7 +90,7 @@ export async function searchProducts(params: SearchProductsParams) {
     { params }
   )
 
-  const searchPage = unwrapData(data)
+  const searchPage = normalizePageResponse(unwrapData(data))
   const currentProducts = await getProducts()
   const currentProductByKey = new Map(
     currentProducts.map((product) => [getProductKey(product), product])
@@ -109,10 +108,6 @@ export async function searchProducts(params: SearchProductsParams) {
   return {
     ...searchPage,
     content,
-    totalElements: content.length,
-    totalPages: content.length > 0 ? 1 : 0,
-    first: true,
-    last: true,
   }
 }
 
@@ -154,17 +149,7 @@ async function searchCurrentProducts(params: SearchProductsParams) {
   const content = matchedProducts
     .slice(start, start + size)
     .map((product) => toSearchProduct(product, undefined, category))
-  const totalPages = Math.ceil(matchedProducts.length / size)
-
-  return {
-    content,
-    page,
-    size,
-    totalElements: matchedProducts.length,
-    totalPages,
-    first: page === 1,
-    last: totalPages === 0 || page >= totalPages,
-  }
+  return createPageResponse(content, page, size, matchedProducts.length)
 }
 
 function toSearchProduct(
@@ -206,15 +191,7 @@ function toProductListSort(
 }
 
 function emptySearchPage(params: SearchProductsParams) {
-  return {
-    content: [],
-    page: params.page ?? 1,
-    size: params.size ?? 20,
-    totalElements: 0,
-    totalPages: 0,
-    first: true,
-    last: true,
-  }
+  return createPageResponse([], params.page ?? 1, params.size ?? 20, 0)
 }
 
 function getProductKey(product: ProductSummary) {

@@ -11,10 +11,10 @@ import type {
 
 const MOCK_SELLER_ACCOUNT_KEY = "dear-mock-seller-account"
 
-export async function getMemberProfile(memberId?: number) {
+export async function getMemberProfile() {
   if (USE_MOCKS) {
     return {
-      id: memberId ?? 1,
+      id: 1,
       name: "김디어",
       defaultShippingAddress: "서울특별시 강남구 테헤란로",
       phoneNumber: "010-1234-5678",
@@ -23,8 +23,7 @@ export async function getMemberProfile(memberId?: number) {
   }
 
   const { data } = await apiClient.get<ApiResponse<MemberProfile>>(
-    "/api/members/profile",
-    { params: memberId ? { memberId } : undefined }
+    "/api/members/profile/me"
   )
 
   return unwrapData(data)

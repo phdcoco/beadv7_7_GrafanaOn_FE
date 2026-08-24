@@ -20,7 +20,7 @@ import { addCartItem } from "@/api/cartApi"
 import { createOffer, createOfferSnapshot } from "@/api/offerApi"
 import { getMemberProfile } from "@/api/memberApi"
 import { getProductDetail } from "@/api/productApi"
-import { addScrap, deleteScrap, getScraps } from "@/api/scrapApi"
+import { addScrap, deleteScrap, getAllScraps } from "@/api/scrapApi"
 import { getApiErrorMessage } from "@/lib/apiClient"
 import { isAuthenticated } from "@/lib/authStorage"
 import { formatDate, formatPrice } from "@/lib/format"
@@ -69,7 +69,7 @@ export function ProductDetailPage() {
 
   const scrapsQuery = useQuery({
     queryKey: ["scraps", "me", "lookup"],
-    queryFn: () => getScraps(0, 100),
+    queryFn: getAllScraps,
     enabled: loggedIn,
   })
 
@@ -90,7 +90,7 @@ export function ProductDetailPage() {
     }
 
     setScrapped(
-      scrapsQuery.data.scrapList.some((scrap) => scrap.id === parsedProductId)
+      scrapsQuery.data.some((scrap) => scrap.id === parsedProductId)
     )
   }, [parsedProductId, scrapsQuery.data])
 

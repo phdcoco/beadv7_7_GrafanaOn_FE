@@ -11,6 +11,7 @@ import {
   Store,
 } from "lucide-react"
 import { getSellerAccount, registerSeller } from "@/api/memberApi"
+import { reissueToken } from "@/api/authApi"
 import { getApiErrorMessage } from "@/lib/apiClient"
 import { isAuthenticated } from "@/lib/authStorage"
 
@@ -42,6 +43,7 @@ export function SellerRegistrationPage() {
   const registerMutation = useMutation({
     mutationFn: registerSeller,
     onSuccess: async () => {
+      await reissueToken().catch(() => undefined)
       await queryClient.invalidateQueries({ queryKey: ["seller-account", "me"] })
       navigate("/profile", { replace: true })
     },

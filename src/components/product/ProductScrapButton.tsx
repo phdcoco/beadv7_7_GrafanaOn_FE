@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Bookmark } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
-import { addScrap, deleteScrap, getScraps } from "@/api/scrapApi"
+import { addScrap, deleteScrap, getAllScraps } from "@/api/scrapApi"
 import { isAuthenticated } from "@/lib/authStorage"
 
 type ProductScrapButtonProps = {
@@ -20,12 +20,11 @@ export function ProductScrapButton({
 
   const scrapsQuery = useQuery({
     queryKey: ["scraps", "me", "lookup"],
-    queryFn: () => getScraps(0, 100),
+    queryFn: getAllScraps,
     enabled: loggedIn,
   })
   const scrapped =
-    scrapsQuery.data?.scrapList.some((scrap) => scrap.id === productId) ??
-    false
+    scrapsQuery.data?.some((scrap) => scrap.id === productId) ?? false
 
   const scrapMutation = useMutation({
     mutationFn: async () => {

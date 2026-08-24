@@ -1,11 +1,15 @@
 import { apiClient } from "@/lib/apiClient"
-import { unwrapData } from "@/lib/apiResponse"
+import {
+  createPageResponse,
+  normalizePageResponse,
+  unwrapData,
+} from "@/lib/apiResponse"
 import { USE_MOCKS } from "@/lib/runtime"
 import {
   createMockProductDetail,
   mockProducts,
 } from "@/data/mockProducts"
-import type { ApiResponse } from "@/types/api"
+import type { ApiResponse, PageResponse } from "@/types/api"
 import type {
   CreateProductRequest,
   GetProductsParams,
@@ -31,8 +35,10 @@ type MockSellerProduct = SellerProduct & {
 }
 
 const mockSellerProducts: MockSellerProduct[] = []
+const DEFAULT_PAGE_SIZE = 20
+const MAX_PAGE_REQUESTS = 50
 
-export async function getProducts(params?: GetProductsParams) {
+export async function getProductsPage(params?: GetProductsParams) {
   if (USE_MOCKS) {
     const createdProducts: ProductSummary[] = mockSellerProducts.map(
       (product) => ({
@@ -48,7 +54,20 @@ export async function getProducts(params?: GetProductsParams) {
       })
     )
 
-    return applyProductListOptions([...mockProducts, ...createdProducts], params)
+    const products = applyProductListOptions(
+      [...mockProducts, ...createdProducts],
+      params
+    )
+    const page = params?.page ?? 1
+    const size = params?.size ?? DEFAULT_PAGE_SIZE
+    const start = (page - 1) * size
+
+    return createPageResponse(
+      products.slice(start, start + size),
+      page,
+      size,
+      products.length
+    )
   }
 
   const requestParams = {
@@ -56,13 +75,43 @@ export async function getProducts(params?: GetProductsParams) {
     status: params?.status,
     createdAt: params?.createdAt,
     category: params?.category,
+    page: params?.page ?? 1,
+    size: params?.size ?? DEFAULT_PAGE_SIZE,
   }
-  const { data } = await apiClient.get<ApiResponse<ProductSummary[]>>(
+  const { data } = await apiClient.get<ApiResponse<PageResponse<ProductSummary>>>(
     "/api/products",
     { params: requestParams }
   )
+  const page = normalizePageResponse(unwrapData(data))
 
-  return applyProductListOptions(unwrapData(data), params)
+  return {
+    ...page,
+    content: applyProductListOptions(page.content, params),
+  }
+}
+
+export async function getProducts(params?: GetProductsParams) {
+  const firstPage = await getProductsPage({
+    ...params,
+    page: 1,
+    size: DEFAULT_PAGE_SIZE,
+  })
+  const products = [...firstPage.content]
+  let currentPage = firstPage
+
+  while (
+    currentPage.pagination.hasNext &&
+    currentPage.pagination.currentPage < MAX_PAGE_REQUESTS
+  ) {
+    currentPage = await getProductsPage({
+      ...params,
+      page: currentPage.pagination.currentPage + 1,
+      size: DEFAULT_PAGE_SIZE,
+    })
+    products.push(...currentPage.content)
+  }
+
+  return applyProductListOptions(products, params)
 }
 
 export async function getProductDetail(
@@ -101,15 +150,39 @@ export async function getProductDetail(
   }
 }
 
-export async function getMySellerProducts(): Promise<SellerProduct[]> {
+async function getMySellerProductsPage(page: number, size: number) {
   if (USE_MOCKS) {
-    return mockSellerProducts
+    const start = (page - 1) * size
+    return createPageResponse(
+      mockSellerProducts.slice(start, start + size),
+      page,
+      size,
+      mockSellerProducts.length
+    )
   }
 
-  const { data } = await apiClient.get<ApiResponse<SellerProduct[]>>(
-    "/api/products/me"
+  const { data } = await apiClient.get<ApiResponse<PageResponse<SellerProduct>>>(
+    "/api/products/me",
+    { params: { page, size } }
   )
-  const sellerProducts = unwrapData(data)
+  return normalizePageResponse(unwrapData(data))
+}
+
+export async function getMySellerProducts(): Promise<SellerProduct[]> {
+  const firstPage = await getMySellerProductsPage(1, DEFAULT_PAGE_SIZE)
+  const sellerProducts = [...firstPage.content]
+  let currentPage = firstPage
+
+  while (
+    currentPage.pagination.hasNext &&
+    currentPage.pagination.currentPage < MAX_PAGE_REQUESTS
+  ) {
+    currentPage = await getMySellerProductsPage(
+      currentPage.pagination.currentPage + 1,
+      DEFAULT_PAGE_SIZE
+    )
+    sellerProducts.push(...currentPage.content)
+  }
 
   if (sellerProducts.every((product) => product.saleType)) {
     return sellerProducts

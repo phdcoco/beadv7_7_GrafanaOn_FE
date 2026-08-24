@@ -6,7 +6,12 @@ export type ProductSearchType = "PRODUCT_NAME" | "CATEGORY" | "STORY_CONTENT"
 
 export type ProductSaleType = "IMMEDIATE" | "OFFER"
 
-export type ProductStatus = "PREPARING" | "ON_SALE" | "SOLD_OUT"
+export type ProductStatus =
+  | "PREPARING"
+  | "ON_SALE"
+  | "TRADING"
+  | "SOLD_OUT"
+  | "DELETED"
 
 export type ProductCategory =
   | "SNEAKERS"
@@ -80,6 +85,8 @@ export type GetProductsParams = {
   category?: ProductCategory
   createdAt?: string
   sort?: ProductListSort
+  page?: number
+  size?: number
 }
 
 export type UploadFileType = "JPG" | "JPEG" | "PNG" | "WEBP"

@@ -1,8 +1,8 @@
 import { apiClient } from "@/lib/apiClient"
-import { unwrapData } from "@/lib/apiResponse"
+import { normalizePageResponse, unwrapData } from "@/lib/apiResponse"
 import { USE_MOCKS } from "@/lib/runtime"
 import { mockProducts } from "@/data/mockProducts"
-import type { ApiResponse } from "@/types/api"
+import type { ApiResponse, PageResponse } from "@/types/api"
 import type { CreatePurchaseRequest, Purchase } from "@/types/order"
 
 const MOCK_PURCHASES_KEY = "dear-mock-purchases"
@@ -38,10 +38,32 @@ export async function getMyPurchases() {
     return settleMockPurchases()
   }
 
-  const { data } = await apiClient.get<ApiResponse<Purchase[]>>(
-    "/api/purchases/me"
+  const { data } = await apiClient.get<ApiResponse<PageResponse<Purchase>>>(
+    "/api/purchases/me",
+    { params: { page: 1, size: 20 } }
   )
-  return unwrapData(data)
+  const firstPage = normalizePageResponse(unwrapData(data))
+  const purchases = [...firstPage.content]
+  let currentPage = firstPage
+
+  while (
+    currentPage.pagination.hasNext &&
+    currentPage.pagination.currentPage < 50
+  ) {
+    const response = await apiClient.get<ApiResponse<PageResponse<Purchase>>>(
+      "/api/purchases/me",
+      {
+        params: {
+          page: currentPage.pagination.currentPage + 1,
+          size: 20,
+        },
+      }
+    )
+    currentPage = normalizePageResponse(unwrapData(response.data))
+    purchases.push(...currentPage.content)
+  }
+
+  return purchases
 }
 
 export async function getPurchase(purchaseId: number) {

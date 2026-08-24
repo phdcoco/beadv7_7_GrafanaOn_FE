@@ -7,6 +7,10 @@ const baseURL =
   import.meta.env.VITE_API_BASE_URL ??
   (import.meta.env.PROD ? "/" : "http://localhost:8080")
 
+export function getApiUrl(path: string) {
+  return new URL(path, new URL(baseURL, window.location.origin)).toString()
+}
+
 export const apiClient = axios.create({
   baseURL,
   withCredentials: true,
@@ -100,6 +104,8 @@ function toApiClientError(error: AxiosError<ApiResponse<unknown>>) {
     response?.data?.message ||
     (response?.status === 401
       ? "로그인이 필요합니다."
+      : response?.status === 503
+        ? "서비스가 잠시 불안정합니다. 잠시 후 다시 시도해 주세요."
       : "요청을 처리하지 못했습니다.")
 
   return new ApiClientError(message, response?.status, response?.data?.code)
