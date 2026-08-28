@@ -9,6 +9,7 @@ import {
   type ProductCategoryFilter,
 } from "@/constants/productCategories"
 import { offerStories } from "@/data/mockProducts"
+import { getApiErrorMessage } from "@/lib/apiClient"
 import { USE_MOCKS } from "@/lib/runtime"
 import type { ProductListSort } from "@/types/product"
 
@@ -113,9 +114,19 @@ export function OfferPurchasePage() {
       )}
 
       {productsQuery.isError && (
-        <p className="p-10 text-center text-sm text-neutral-500">
-          오퍼 상품을 불러오지 못했습니다.
-        </p>
+        <div className="px-6 py-12 text-center">
+          <p className="text-sm font-bold">오퍼 상품을 불러오지 못했습니다.</p>
+          <p className="mt-2 text-xs text-neutral-500">
+            {getApiErrorMessage(productsQuery.error)}
+          </p>
+          <button
+            type="button"
+            className="mt-5 h-10 rounded-md border border-neutral-300 bg-white px-4 text-xs font-bold"
+            onClick={() => productsQuery.refetch()}
+          >
+            다시 시도
+          </button>
+        </div>
       )}
 
       {USE_MOCKS ? (
@@ -132,7 +143,7 @@ export function OfferPurchasePage() {
         </div>
       )}
 
-      {!productsQuery.isLoading && visibleProductCount === 0 && (
+      {!productsQuery.isLoading && !productsQuery.isError && visibleProductCount === 0 && (
         <p className="p-10 text-center text-sm text-neutral-500">
           선택한 카테고리의 오퍼 상품이 없습니다.
         </p>

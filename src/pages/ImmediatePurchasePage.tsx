@@ -7,6 +7,7 @@ import {
   productCategoryOptions,
   type ProductCategoryFilter,
 } from "@/constants/productCategories"
+import { getApiErrorMessage } from "@/lib/apiClient"
 import type { ProductListSort } from "@/types/product"
 
 export function ImmediatePurchasePage() {
@@ -94,7 +95,23 @@ export function ImmediatePurchasePage() {
         ))}
       </div>
 
-      {!productsQuery.isLoading && products.length === 0 && (
+      {productsQuery.isError && (
+        <div className="px-6 py-12 text-center">
+          <p className="text-sm font-bold">즉시구매 상품을 불러오지 못했습니다.</p>
+          <p className="mt-2 text-xs text-neutral-500">
+            {getApiErrorMessage(productsQuery.error)}
+          </p>
+          <button
+            type="button"
+            className="mt-5 h-10 rounded-md border border-neutral-300 px-4 text-xs font-bold"
+            onClick={() => productsQuery.refetch()}
+          >
+            다시 시도
+          </button>
+        </div>
+      )}
+
+      {!productsQuery.isLoading && !productsQuery.isError && products.length === 0 && (
         <p className="p-10 text-center text-sm text-neutral-500">
           선택한 카테고리의 즉시구매 상품이 없습니다.
         </p>

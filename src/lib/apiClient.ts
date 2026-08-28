@@ -3,9 +3,15 @@ import { clearAccessToken, getAccessToken, setAccessToken } from "@/lib/authStor
 import type { ApiResponse } from "@/types/api"
 import type { TokenResponse } from "@/types/auth"
 
+const configuredBaseURL = import.meta.env.VITE_API_BASE_URL
+const isNativeApp = window.location.protocol === "capacitor:"
+
+// Web production traffic stays same-origin and goes through the Vercel rewrite.
+// Capacitor cannot use that rewrite, so it keeps the configured absolute URL.
 const baseURL =
-  import.meta.env.VITE_API_BASE_URL ??
-  (import.meta.env.PROD ? "/" : "http://localhost:8080")
+  import.meta.env.PROD && !isNativeApp
+    ? "/"
+    : configuredBaseURL ?? "http://localhost:8080"
 
 export function getApiUrl(path: string) {
   return new URL(path, new URL(baseURL, window.location.origin)).toString()
