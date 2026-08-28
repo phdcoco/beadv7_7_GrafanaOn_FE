@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { CalendarClock, LockKeyhole } from "lucide-react"
-import { getProducts } from "@/api/productApi"
+import { getProductsPage } from "@/api/productApi"
+import { PaginationNav } from "@/components/ui/PaginationNav"
 import {
   formatReleaseDate,
   getNextReleaseAt,
@@ -13,14 +14,21 @@ const upcomingGroups: { saleType: ProductSaleType; label: string }[] = [
   { saleType: "IMMEDIATE", label: "즉시구매" },
   { saleType: "OFFER", label: "오퍼구매" },
 ]
+const UPCOMING_PAGE_SIZE = 12
 
 export function UpcomingRelease() {
   const queryClient = useQueryClient()
   const [now, setNow] = useState(() => new Date())
   const [releaseAt, setReleaseAt] = useState(() => getNextReleaseAt())
+  const [page, setPage] = useState(1)
   const productsQuery = useQuery({
-    queryKey: ["products", "PREPARING", "upcoming"],
-    queryFn: () => getProducts({ status: "PREPARING" }),
+    queryKey: ["products", "PREPARING", "upcoming", page],
+    queryFn: () =>
+      getProductsPage({
+        status: "PREPARING",
+        page,
+        size: UPCOMING_PAGE_SIZE,
+      }),
   })
 
   useEffect(() => {
@@ -30,6 +38,7 @@ export function UpcomingRelease() {
       if (current.getTime() >= releaseAt.getTime()) {
         void queryClient.invalidateQueries({ queryKey: ["products"] })
         void queryClient.invalidateQueries({ queryKey: ["search-products"] })
+        setPage(1)
         setReleaseAt(getNextReleaseAt(current))
       }
 
@@ -40,8 +49,8 @@ export function UpcomingRelease() {
   }, [queryClient, releaseAt])
 
   const countdown = getReleaseCountdown(now, releaseAt)
-  const products = productsQuery.data ?? []
-  const totalProducts = products.length
+  const products = productsQuery.data?.content ?? []
+  const totalProducts = productsQuery.data?.pagination.totalItems ?? 0
 
   return (
     <div>
@@ -127,7 +136,7 @@ export function UpcomingRelease() {
               <div className="mb-3 flex items-end justify-between">
                 <h2 className="text-lg font-extrabold">{group.label}</h2>
                 <span className="text-xs font-semibold text-neutral-400">
-                  {groupProducts.length}개 공개 예정
+                  현재 페이지 {groupProducts.length}개
                 </span>
               </div>
 
@@ -139,6 +148,17 @@ export function UpcomingRelease() {
             </section>
           )
         })}
+
+        {productsQuery.data && (
+          <PaginationNav
+            pagination={productsQuery.data.pagination}
+            label="공개 예정 상품 페이지"
+            onPageChange={(nextPage) => {
+              setPage(nextPage)
+              window.scrollTo({ top: 0, behavior: "smooth" })
+            }}
+          />
+        )}
       </div>
     </div>
   )
