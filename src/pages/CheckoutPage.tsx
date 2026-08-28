@@ -34,8 +34,8 @@ export function CheckoutPage() {
   const [delivery, setDelivery] = useState("")
 
   const productQuery = useQuery({
-    queryKey: ["product-detail", parsedProductId, "IMMEDIATE"],
-    queryFn: () => getProductDetail(parsedProductId, "IMMEDIATE"),
+    queryKey: ["product-detail", parsedProductId],
+    queryFn: () => getProductDetail(parsedProductId),
     enabled: loggedIn && Number.isFinite(parsedProductId),
   })
 

@@ -35,8 +35,8 @@ export function PurchasePaymentResultPage() {
 
   const resolvedProductId = purchaseQuery.data?.productId ?? productId
   const productQuery = useQuery({
-    queryKey: ["product-detail", resolvedProductId, "IMMEDIATE"],
-    queryFn: () => getProductDetail(resolvedProductId, "IMMEDIATE"),
+    queryKey: ["product-detail", resolvedProductId],
+    queryFn: () => getProductDetail(resolvedProductId),
     enabled: loggedIn && Number.isFinite(resolvedProductId),
   })
 

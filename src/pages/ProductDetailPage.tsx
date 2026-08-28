@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type UIEvent } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import {
   ArrowLeft,
   ArrowRight,
@@ -24,7 +24,7 @@ import { addScrap, deleteScrap, getAllScraps } from "@/api/scrapApi"
 import { getApiErrorMessage } from "@/lib/apiClient"
 import { isAuthenticated } from "@/lib/authStorage"
 import { formatDate, formatPrice } from "@/lib/format"
-import type { ProductSaleType } from "@/types/product"
+import type { ProductStatus } from "@/types/product"
 
 const categoryLabels: Record<string, string> = {
   SNEAKERS: "스니커즈",
@@ -35,13 +35,26 @@ const categoryLabels: Record<string, string> = {
   WINTER_SHOES: "패딩/퍼 신발",
 }
 
+const productStatusLabels: Record<ProductStatus, string> = {
+  PREPARING: "공개 예정",
+  ON_SALE: "판매 중",
+  TRADING: "거래 중",
+  SOLD_OUT: "판매 완료",
+  DELETED: "삭제된 상품",
+}
+
+const unavailableMessages: Partial<Record<ProductStatus, string>> = {
+  PREPARING: "아직 공개 전인 상품입니다.",
+  TRADING: "현재 다른 회원과 거래가 진행 중입니다.",
+  SOLD_OUT: "판매가 완료된 상품입니다.",
+  DELETED: "판매자가 삭제한 상품입니다.",
+}
+
 export function ProductDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { productId } = useParams()
-  const [searchParams] = useSearchParams()
   const parsedProductId = Number(productId)
-  const querySaleType = searchParams.get("saleType") as ProductSaleType | null
   const loggedIn = isAuthenticated()
   const [activeIndex, setActiveIndex] = useState(0)
   const [furthestViewedIndex, setFurthestViewedIndex] = useState(0)
@@ -55,9 +68,8 @@ export function ProductDetailPage() {
   const sliderRef = useRef<HTMLDivElement>(null)
 
   const productQuery = useQuery({
-    queryKey: ["product-detail", parsedProductId, querySaleType],
-    queryFn: () =>
-      getProductDetail(parsedProductId, querySaleType ?? undefined),
+    queryKey: ["product-detail", parsedProductId],
+    queryFn: () => getProductDetail(parsedProductId),
     enabled: Number.isFinite(parsedProductId),
   })
 
@@ -152,7 +164,7 @@ export function ProductDetailPage() {
             : "상품 상세를 보려면 로그인이 필요합니다."}
         </p>
         <Link
-          to={loggedIn ? "/" : `/login?redirect=/products/${parsedProductId}?saleType=${querySaleType ?? "IMMEDIATE"}`}
+          to={loggedIn ? "/" : `/login?redirect=/products/${parsedProductId}`}
           className="text-sm font-bold underline"
         >
           {loggedIn ? "홈으로 돌아가기" : "로그인하기"}
@@ -162,8 +174,9 @@ export function ProductDetailPage() {
   }
 
   const product = productQuery.data
-  const saleType = product.saleType ?? querySaleType
+  const saleType = product.saleType
   const isOffer = saleType === "OFFER"
+  const isTradable = product.status === "ON_SALE"
   const isSeller = profileQuery.data?.id === product.sellerId
   const viewedAllOfferImages =
     product.images.length > 0 &&
@@ -370,19 +383,26 @@ export function ProductDetailPage() {
             <p className="mt-2 text-2xl font-black">
               {formatPrice(product.price)}원
             </p>
-            <span
-              className={`mt-4 inline-flex rounded px-2 py-1 text-xs font-bold ${
-                isOffer
-                  ? "bg-brand/15 text-neutral-950"
-                  : "bg-neutral-100 text-neutral-700"
-              }`}
-            >
-              {saleType
-                ? isOffer
-                  ? "오퍼구매"
-                  : "즉시구매"
-                : "판매방식 미확인"}
-            </span>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span
+                className={`inline-flex rounded px-2 py-1 text-xs font-bold ${
+                  isOffer
+                    ? "bg-brand/15 text-neutral-950"
+                    : "bg-neutral-100 text-neutral-700"
+                }`}
+              >
+                {isOffer ? "오퍼구매" : "즉시구매"}
+              </span>
+              <span
+                className={`inline-flex rounded px-2 py-1 text-xs font-bold ${
+                  isTradable
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-neutral-100 text-neutral-600"
+                }`}
+              >
+                {productStatusLabels[product.status]}
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 border-b border-neutral-100 px-5 py-5 text-sm md:px-7">
@@ -419,7 +439,13 @@ export function ProductDetailPage() {
 
       <div className="sticky bottom-0 z-30 border-t border-neutral-200 bg-white/97 p-3 backdrop-blur">
         <div className="mx-auto max-w-[760px]">
-          {saleType === "IMMEDIATE" && (
+          {!isTradable && (
+            <p className="py-2 text-center text-sm font-semibold text-neutral-600">
+              {unavailableMessages[product.status] ?? "현재 거래할 수 없는 상품입니다."}
+            </p>
+          )}
+
+          {isTradable && saleType === "IMMEDIATE" && (
             <div className="grid grid-cols-[minmax(112px,0.8fr)_minmax(0,1.2fr)] gap-2">
               <button
                 type="button"
@@ -444,13 +470,13 @@ export function ProductDetailPage() {
             </div>
           )}
 
-          {isOffer && isSeller && (
+          {isTradable && isOffer && isSeller && (
             <p className="py-2 text-center text-sm font-semibold text-neutral-600">
               내가 등록한 상품에는 오퍼를 작성할 수 없어요.
             </p>
           )}
 
-          {isOffer && !isSeller && !viewedAllOfferImages && (
+          {isTradable && isOffer && !isSeller && !viewedAllOfferImages && (
             <div className="flex min-h-12 items-center gap-3 px-1">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-brand/10 text-neutral-950">
                 <Images className="size-4" />
@@ -468,7 +494,7 @@ export function ProductDetailPage() {
             </div>
           )}
 
-          {isOffer && !isSeller && viewedAllOfferImages && (
+          {isTradable && isOffer && !isSeller && viewedAllOfferImages && (
             <button
               type="button"
               className="h-12 w-full rounded-md bg-brand text-sm font-bold text-neutral-950 hover:brightness-95"

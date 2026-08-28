@@ -22,6 +22,7 @@ const searchTypes: { value: ProductSearchType; label: string }[] = [
 ]
 
 const searchSorts: { value: ProductSearchSort; label: string }[] = [
+  { value: "RELEVANCE", label: "관련도순" },
   { value: "LATEST", label: "최신순" },
   { value: "VIEW_COUNT", label: "조회수순" },
   { value: "PRICE_ASC", label: "낮은 가격순" },
@@ -32,7 +33,7 @@ export function ProductSearchPage() {
   const [keywordInput, setKeywordInput] = useState("")
   const [keyword, setKeyword] = useState("")
   const [type, setType] = useState<ProductSearchType>("PRODUCT_NAME")
-  const [sort, setSort] = useState<ProductSearchSort>("LATEST")
+  const [sort, setSort] = useState<ProductSearchSort>("RELEVANCE")
   const [page, setPage] = useState(1)
 
   const productsQuery = useQuery({

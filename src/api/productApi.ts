@@ -114,10 +114,7 @@ export async function getProducts(params?: GetProductsParams) {
   return applyProductListOptions(products, params)
 }
 
-export async function getProductDetail(
-  productId: number,
-  saleType?: ProductSaleType
-) {
+export async function getProductDetail(productId: number) {
   if (USE_MOCKS) {
     const createdProduct = mockSellerProducts.find(
       (product) => product.id === productId
@@ -139,14 +136,10 @@ export async function getProductDetail(
   const { data } = await apiClient.get<ApiResponse<ProductDetail>>(
     `/api/products/${productId}`
   )
-  const product = unwrapData(data)
-  const resolvedSaleType =
-    product.saleType ?? saleType ?? (await findProductSaleType(productId))
 
   return {
-    ...product,
+    ...unwrapData(data),
     productId,
-    saleType: resolvedSaleType,
   }
 }
 
@@ -276,6 +269,7 @@ export async function createProduct(request: CreateProductRequest) {
     const detail: ProductDetail = {
       productId: id,
       saleType: request.saleType,
+      status: "PREPARING",
       sellerId: 1,
       images: request.productImageContents.map((image) => ({
         sortOrder: image.sortOrder,
@@ -337,15 +331,6 @@ function getUploadContentType(file: File) {
   }
 
   return "image/jpeg"
-}
-
-async function findProductSaleType(productId: number) {
-  try {
-    const products = await getProducts()
-    return products.find((product) => product.id === productId)?.saleType
-  } catch {
-    return undefined
-  }
 }
 
 function applyProductListOptions(

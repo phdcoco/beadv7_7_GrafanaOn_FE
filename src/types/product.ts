@@ -1,4 +1,9 @@
-export type ProductSearchSort = "LATEST" | "VIEW_COUNT" | "PRICE_ASC" | "PRICE_DESC"
+export type ProductSearchSort =
+  | "RELEVANCE"
+  | "LATEST"
+  | "VIEW_COUNT"
+  | "PRICE_ASC"
+  | "PRICE_DESC"
 
 export type ProductListSort = "DEFAULT" | "VIEW_COUNT" | "PRICE_ASC" | "PRICE_DESC"
 
@@ -43,7 +48,8 @@ export type ProductImage = {
 
 export type ProductDetail = {
   productId: number
-  saleType?: ProductSaleType
+  saleType: ProductSaleType
+  status: ProductStatus
   sellerId: number
   images: ProductImage[]
   name: string

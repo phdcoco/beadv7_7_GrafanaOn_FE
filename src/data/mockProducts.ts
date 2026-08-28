@@ -167,6 +167,7 @@ export function createMockProductDetail(productId: number): ProductDetail | unde
   return {
     productId: product.id,
     saleType: product.saleType,
+    status: product.status,
     sellerId: 12 + product.id,
     images: [
       {
