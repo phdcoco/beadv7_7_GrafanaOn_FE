@@ -6,12 +6,9 @@ import {
 } from "@/lib/apiResponse"
 import { USE_MOCKS } from "@/lib/runtime"
 import { mockProducts } from "@/data/mockProducts"
-import { getProducts } from "@/api/productApi"
 import type { ApiResponse, PageResponse } from "@/types/api"
 import type {
   ProductCategory,
-  ProductListSort,
-  ProductSummary,
   SearchProduct,
   SearchProductsParams,
 } from "@/types/product"
@@ -81,94 +78,23 @@ export async function searchProducts(params: SearchProductsParams) {
     )
   }
 
-  if (params.type !== "STORY_CONTENT") {
-    return searchCurrentProducts(params)
-  }
+  const requestParams = normalizeSearchParams(params)
 
   const { data } = await apiClient.get<ApiResponse<PageResponse<SearchProduct>>>(
     "/api/search/products",
-    { params }
+    { params: requestParams }
   )
 
-  const searchPage = normalizePageResponse(unwrapData(data))
-  const currentProducts = await getProducts()
-  const currentProductByKey = new Map(
-    currentProducts.map((product) => [getProductKey(product), product])
-  )
-  const content = searchPage.content.flatMap((product) => {
-    const currentProduct = currentProductByKey.get(getSearchProductKey(product))
-
-    if (!currentProduct || currentProduct.status === "SOLD_OUT") {
-      return []
-    }
-
-    return [toSearchProduct(currentProduct, product)]
-  })
-
-  return {
-    ...searchPage,
-    content,
-  }
+  return normalizePageResponse(unwrapData(data))
 }
 
-async function searchCurrentProducts(params: SearchProductsParams) {
+function normalizeSearchParams(params: SearchProductsParams) {
   const category =
     params.type === "CATEGORY" ? resolveCategory(params.keyword) : undefined
 
-  if (params.type === "CATEGORY" && !category) {
-    return emptySearchPage(params)
-  }
-
-  const products = await getProducts({
-    category,
-    sort: toProductListSort(params.sort),
-  })
-  const normalizedKeyword = normalize(params.keyword)
-  const matchedProducts = products.filter((product) => {
-    if (product.status === "SOLD_OUT") {
-      return false
-    }
-
-    if (params.type === "CATEGORY") {
-      return true
-    }
-
-    return (
-      normalize(product.name).includes(normalizedKeyword) ||
-      normalize(product.brand).includes(normalizedKeyword)
-    )
-  })
-
-  if (!params.sort || params.sort === "LATEST") {
-    matchedProducts.sort((left, right) => right.id - left.id)
-  }
-
-  const page = params.page ?? 1
-  const size = params.size ?? 20
-  const start = (page - 1) * size
-  const content = matchedProducts
-    .slice(start, start + size)
-    .map((product) => toSearchProduct(product, undefined, category))
-  return createPageResponse(content, page, size, matchedProducts.length)
-}
-
-function toSearchProduct(
-  product: ProductSummary,
-  indexedProduct?: SearchProduct,
-  category?: ProductCategory
-): SearchProduct {
   return {
-    productId: product.id,
-    productName: product.name,
-    modelNumber: indexedProduct?.modelNumber ?? "",
-    category: indexedProduct?.category ?? product.category ?? category ?? "",
-    releaseDate: indexedProduct?.releaseDate ?? null,
-    productPrice: product.price,
-    saleType: product.saleType,
-    viewCount: product.viewCount,
-    description: indexedProduct?.description ?? null,
-    brand: product.brand,
-    imageUrl: product.url,
+    ...params,
+    keyword: category ?? params.keyword,
   }
 }
 
@@ -178,30 +104,6 @@ function resolveCategory(keyword: string) {
   return categoryAliases.find(({ aliases }) =>
     aliases.some((alias) => normalize(alias) === normalizedKeyword)
   )?.value
-}
-
-function toProductListSort(
-  sort?: SearchProductsParams["sort"]
-): ProductListSort | undefined {
-  if (sort === "VIEW_COUNT" || sort === "PRICE_ASC" || sort === "PRICE_DESC") {
-    return sort
-  }
-
-  return undefined
-}
-
-function emptySearchPage(params: SearchProductsParams) {
-  return createPageResponse([], params.page ?? 1, params.size ?? 20, 0)
-}
-
-function getProductKey(product: ProductSummary) {
-  return `${product.name}|${product.saleType}|${Number(product.price)}`
-}
-
-function getSearchProductKey(product: SearchProduct) {
-  return `${product.productName}|${product.saleType}|${Number(
-    product.productPrice
-  )}`
 }
 
 function normalize(value: string) {
