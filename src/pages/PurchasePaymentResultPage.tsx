@@ -9,8 +9,10 @@ import {
   ReceiptText,
 } from "lucide-react"
 import { deleteCartItems } from "@/api/cartApi"
+import { getMemberProfile } from "@/api/memberApi"
 import { getProductDetail } from "@/api/productApi"
 import { getPurchase } from "@/api/purchaseApi"
+import { trackBehaviorSilently } from "@/api/recommendationApi"
 import { getApiErrorMessage } from "@/lib/apiClient"
 import { isAuthenticated } from "@/lib/authStorage"
 import { formatPrice } from "@/lib/format"
@@ -24,6 +26,7 @@ export function PurchasePaymentResultPage() {
   const fromCart = searchParams.get("from") === "cart"
   const loggedIn = isAuthenticated()
   const cartCleanedRef = useRef(false)
+  const trackedPurchaseRef = useRef<number | null>(null)
 
   const purchaseQuery = useQuery({
     queryKey: ["purchase", parsedPurchaseId],
@@ -38,6 +41,11 @@ export function PurchasePaymentResultPage() {
     queryKey: ["product-detail", resolvedProductId],
     queryFn: () => getProductDetail(resolvedProductId),
     enabled: loggedIn && Number.isFinite(resolvedProductId),
+  })
+  const profileQuery = useQuery({
+    queryKey: ["member-profile", "me"],
+    queryFn: getMemberProfile,
+    enabled: loggedIn,
   })
 
   const purchase = purchaseQuery.data
@@ -63,6 +71,28 @@ export function PurchasePaymentResultPage() {
       void queryClient.invalidateQueries({ queryKey: ["cart", "me"] })
     })
   }, [fromCart, paymentSucceeded, queryClient, resolvedProductId])
+
+  useEffect(() => {
+    const memberId = profileQuery.data?.id
+
+    if (
+      !paymentSucceeded ||
+      !purchase ||
+      !memberId ||
+      trackedPurchaseRef.current === purchase.id
+    ) {
+      return
+    }
+
+    trackedPurchaseRef.current = purchase.id
+    trackBehaviorSilently({
+      eventId: `purchase-${purchase.id}`,
+      recommendationId: null,
+      memberId,
+      productId: purchase.productId,
+      eventType: "PURCHASE",
+    })
+  }, [paymentSucceeded, profileQuery.data?.id, purchase])
 
   if (!loggedIn) {
     return (

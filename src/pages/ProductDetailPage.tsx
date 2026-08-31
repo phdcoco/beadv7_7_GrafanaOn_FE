@@ -20,6 +20,7 @@ import { addCartItem } from "@/api/cartApi"
 import { createOffer, createOfferSnapshot } from "@/api/offerApi"
 import { getMemberProfile } from "@/api/memberApi"
 import { getProductDetail } from "@/api/productApi"
+import { trackBehaviorSilently } from "@/api/recommendationApi"
 import { addScrap, deleteScrap, getAllScraps } from "@/api/scrapApi"
 import { getApiErrorMessage } from "@/lib/apiClient"
 import { isAuthenticated } from "@/lib/authStorage"
@@ -66,6 +67,7 @@ export function ProductDetailPage() {
   const [successMessage, setSuccessMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
   const sliderRef = useRef<HTMLDivElement>(null)
+  const viewedProductRef = useRef<number | null>(null)
 
   const productQuery = useQuery({
     queryKey: ["product-detail", parsedProductId],
@@ -106,18 +108,48 @@ export function ProductDetailPage() {
     )
   }, [parsedProductId, scrapsQuery.data])
 
+  useEffect(() => {
+    const memberId = profileQuery.data?.id
+
+    if (
+      !productQuery.data ||
+      !memberId ||
+      viewedProductRef.current === parsedProductId
+    ) {
+      return
+    }
+
+    viewedProductRef.current = parsedProductId
+    trackBehaviorSilently({
+      recommendationId: null,
+      memberId,
+      productId: parsedProductId,
+      eventType: "VIEW",
+    })
+  }, [parsedProductId, productQuery.data, profileQuery.data?.id])
+
   const scrapMutation = useMutation({
     mutationFn: async () => {
       if (scrapped) {
         await deleteScrap(parsedProductId)
-        return
+        return "removed" as const
       }
 
       await addScrap(parsedProductId)
+      return "added" as const
     },
-    onSuccess: () => {
+    onSuccess: (action) => {
       setScrapped((current) => !current)
       void queryClient.invalidateQueries({ queryKey: ["scraps", "me"] })
+
+      if (action === "added" && profileQuery.data?.id) {
+        trackBehaviorSilently({
+          recommendationId: null,
+          memberId: profileQuery.data.id,
+          productId: parsedProductId,
+          eventType: "SCRAP",
+        })
+      }
     },
   })
 
@@ -127,6 +159,15 @@ export function ProductDetailPage() {
       setErrorMessage("")
       setSuccessMessage("장바구니에 담았습니다.")
       void queryClient.invalidateQueries({ queryKey: ["cart", "me"] })
+
+      if (profileQuery.data?.id) {
+        trackBehaviorSilently({
+          recommendationId: null,
+          memberId: profileQuery.data.id,
+          productId: parsedProductId,
+          eventType: "CART_ADD",
+        })
+      }
     },
     onError: (error) => {
       setSuccessMessage("")

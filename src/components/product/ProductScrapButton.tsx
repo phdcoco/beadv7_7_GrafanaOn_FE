@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Bookmark } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
+import { getMemberProfile } from "@/api/memberApi"
+import { trackBehaviorSilently } from "@/api/recommendationApi"
 import { addScrap, deleteScrap, getAllScraps } from "@/api/scrapApi"
 import { isAuthenticated } from "@/lib/authStorage"
 
@@ -23,6 +25,11 @@ export function ProductScrapButton({
     queryFn: getAllScraps,
     enabled: loggedIn,
   })
+  const profileQuery = useQuery({
+    queryKey: ["member-profile", "me"],
+    queryFn: getMemberProfile,
+    enabled: loggedIn,
+  })
   const scrapped =
     scrapsQuery.data?.some((scrap) => scrap.id === productId) ?? false
 
@@ -30,13 +37,23 @@ export function ProductScrapButton({
     mutationFn: async () => {
       if (scrapped) {
         await deleteScrap(productId)
-        return
+        return "removed" as const
       }
 
       await addScrap(productId)
+      return "added" as const
     },
-    onSuccess: () => {
+    onSuccess: (action) => {
       void queryClient.invalidateQueries({ queryKey: ["scraps", "me"] })
+
+      if (action === "added" && profileQuery.data?.id) {
+        trackBehaviorSilently({
+          recommendationId: null,
+          memberId: profileQuery.data.id,
+          productId,
+          eventType: "SCRAP",
+        })
+      }
     },
   })
 
